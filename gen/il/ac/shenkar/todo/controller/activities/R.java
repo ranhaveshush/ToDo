@@ -41,7 +41,7 @@ public final class R {
         public static final int button_done=0x7f040007;
         public static final int hint_description=0x7f040006;
         public static final int menu_settings=0x7f040003;
-        /**  create tast activity 
+        /**  create task activity 
          */
         public static final int title_activity_create_task=0x7f040004;
         /**  task list activity 

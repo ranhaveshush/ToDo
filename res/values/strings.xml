@@ -7,7 +7,7 @@
     <string name="button_add_task">Add Task</string>
     <string name="menu_settings">Settings</string>
     
-    <!-- create tast activity -->
+    <!-- create task activity -->
     <string name="title_activity_create_task">Create Task</string>
     <string name="button_create">Create</string>
     <string name="hint_description">Description</string>
