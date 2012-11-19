@@ -11,9 +11,11 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 /**
@@ -31,6 +33,9 @@ public class TaskBaseAdapter extends BaseAdapter {
 	 */
 	private static ArrayList<Task> tasksArrayList = null;
 	
+	/**
+	 * 
+	 */
 	private LayoutInflater inflater = null;
 	
 	/**
@@ -85,7 +90,21 @@ public class TaskBaseAdapter extends BaseAdapter {
 			holder = (ViewHolder) convertView.getTag();
 		}
 		
-		holder.tv_itemDescription.setText( tasksArrayList.get(position).getDescription() );
+		Task task = tasksArrayList.get(position);
+		
+		holder.tv_itemDescription.setText( task.getDescription() );
+		
+		holder.b_itemDone.setTag(position);
+		
+		final OnClickListener doneListener = new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				int position = (Integer) v.getTag();
+				tasksArrayList.remove(position);
+				notifyDataSetChanged();
+			}
+		};
+		holder.b_itemDone.setOnClickListener(doneListener);
 		
 		return convertView;
 	}
