@@ -3,6 +3,7 @@
  */
 package il.ac.shenkar.todo.model.dao;
 
+import android.content.Context;
 import il.ac.shenkar.todo.model.dao.logic.ITaskDAO;
 
 /**
@@ -22,6 +23,6 @@ public abstract class DAOFactory {
 		}
 	}
 	
-	public abstract ITaskDAO getTaskDAO();
+	public abstract ITaskDAO getTaskDAO(Context context);
 
 }
