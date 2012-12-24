@@ -4,6 +4,7 @@
 package il.ac.shenkar.todo.model.dto;
 
 
+
 /**
  * This class represents a task.
  * 
@@ -22,9 +23,19 @@ public class Task {
 	private long id;
 	
 	/**
+	 * Task's title.
+	 */
+	private String title = null;
+	
+	/**
 	 * Task's description.
 	 */
 	private String description = null;
+	
+	/**
+	 * Task's datetime reminder.
+	 */
+	private long dateTimeMilliSec = 0;
 
 	/**
 	 * Default constructor.
@@ -32,27 +43,31 @@ public class Task {
 	public Task() {
 		super();
 	}
+	
+	/**
+	 * Parcial constructor.
+	 * 
+	 * @param title
+	 */
+	public Task(String title) {
+		super();
+		this.title = title;
+	}
 
 	/**
 	 * Full constructor.
 	 * 
 	 * @param id
+	 * @param title
 	 * @param description
+	 * @param dateTime
 	 */
-	public Task(long id, String description) {
+	public Task(long id, String title, String description, long dateTimeMilliSec) {
 		super();
 		this.id = id;
+		this.title = title;
 		this.description = description;
-	}
-	
-	/**
-	 * Partcial constructor.
-	 * 
-	 * @param description
-	 */
-	public Task(String description) {
-		super();
-		this.description = description;
+		this.dateTimeMilliSec = dateTimeMilliSec;
 	}
 	
 	/**
@@ -68,6 +83,20 @@ public class Task {
 	public void setId(long id) {
 		this.id = id;
 	}
+	
+	/**
+	 * @return the title
+	 */
+	public String getTitle() {
+		return title;
+	}
+
+	/**
+	 * @param title the title to set
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
 
 	/**
 	 * @return the description
@@ -82,13 +111,27 @@ public class Task {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+	
+	/**
+	 * @return the dateTimeMilliSec
+	 */
+	public long getDateTimeMilliSec() {
+		return dateTimeMilliSec;
+	}
+
+	/**
+	 * @param dateTimeMilliSec the dateTimeMilliSec to set
+	 */
+	public void setDateTimeMilliSec(long dateTimeMilliSec) {
+		this.dateTimeMilliSec = dateTimeMilliSec;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "TASK[ID:" + id + ", DESCRIPTION:" + description + "]";
+		return "TASK[ID:" + id + ", TITLE:" + title + ", DESCRIPTION:" + description + ", DATETIMEMILLISEC: " + dateTimeMilliSec + "]";
 	}
 
 }

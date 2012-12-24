@@ -3,10 +3,12 @@
  */
 package il.ac.shenkar.todo.controller.adapters;
 
-import il.ac.shenkar.todo.controller.activities.R;
-import il.ac.shenkar.todo.model.dao.DAOFactory;
+import il.ac.shenkar.todo.R;
+import il.ac.shenkar.todo.model.contentproviders.ToDo;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,24 +24,28 @@ import android.widget.TextView;
 public class TasksCursorAdapter extends CursorAdapter {
 
 	/**
-	 * 
+	 * Context.
 	 */
 	private Context context = null;
 
 	/**
-	 * 
+	 * LyoutInflater.
 	 */
 	private LayoutInflater inflater = null;
 
 	/**
-	 * 
+	 * OnClickListener for the done button.
+	 * Deletes the task.
 	 */
-	private OnClickListener doneOnClickListener = new OnClickListener() {
+	private OnClickListener buttonDoneOnClickListener = new OnClickListener() {
 		@Override
 		public void onClick(View view) {
-			long taskId = (Long) view.getTag();
-			DAOFactory.getDAOFactory(DAOFactory.SQL_LITE).getTaskDAO(context)
-					.deleteTask(taskId);
+			// Gets the task's to delete id
+			long taskToDeleteId = (Long) view.getTag();
+			Uri taskToDeleteUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_URI, taskToDeleteId);
+			
+			// Deletes the task from the database
+			context.getContentResolver().delete(taskToDeleteUri, null, null);
 		}
 	};
 
@@ -52,23 +58,35 @@ public class TasksCursorAdapter extends CursorAdapter {
 	 */
 	public TasksCursorAdapter(Context context, Cursor cursor, int flags) {
 		super(context, cursor, flags);
-		inflater = LayoutInflater.from(context);
+		this.context = context;
+		this.inflater = LayoutInflater.from(context);
 	}
 
+	/* (non-Javadoc)
+	 * @see android.support.v4.widget.CursorAdapter#bindView(android.view.View, android.content.Context, android.database.Cursor)
+	 */
 	@Override
 	public void bindView(View view, Context context, Cursor cursor) {
-		TextView tvDescription = (TextView) view
-				.findViewById(R.id.tvDescription);
-		Button bDone = (Button) view.findViewById(R.id.bDone);
+		// Gets the view objects
+		TextView textViewTitle = (TextView) view.findViewById(R.id.text_view_task_title);
+		Button buttonDone = (Button) view.findViewById(R.id.button_done);
 
-		tvDescription.setText(cursor.getString(1));
-		bDone.setTag(cursor.getLong(0));
-		bDone.setOnClickListener(doneOnClickListener);
+		// Sets the view objects contents and functionality
+		// Sets the view text to present the task's title.
+		String taskTitle = cursor.getString(ToDo.Tasks.COLUMN_POSITION_TITLE);
+		textViewTitle.setText(taskTitle);
+		// Sets the tag of the button to the task's id.
+		// For later delete reference.
+		buttonDone.setTag(cursor.getLong(ToDo.Tasks.COLUMN_POSITION_ID));
+		buttonDone.setOnClickListener(buttonDoneOnClickListener);
 	}
 
+	/* (non-Javadoc)
+	 * @see android.support.v4.widget.CursorAdapter#newView(android.content.Context, android.database.Cursor, android.view.ViewGroup)
+	 */
 	@Override
 	public View newView(Context context, Cursor cursor, ViewGroup parent) {
-		return inflater.inflate(R.layout.task_view, parent, false);
+		return inflater.inflate(R.layout.listview_item_task, parent, false);
 	}
 
 }

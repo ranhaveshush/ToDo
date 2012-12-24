@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <item android:id="@+id/menu_item_microphone"
+        android:icon="@drawable/ic_action_microphone"
+        android:title="@string/menu_item_microphone"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="1" />
+    
+    <item android:id="@+id/menu_item_task_title"
+        android:actionLayout="@layout/menu_item_task_title"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="2" />
+    
+    <item android:id="@+id/menu_item_add_task"
+        android:icon="@drawable/ic_action_add_task"
+        android:title="@string/menu_item_add_task"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="3" />
+    
+    <item android:id="@+id/menu_item_edit_task"
+        android:icon="@drawable/ic_action_edit_task"
+        android:title="@string/menu_item_edit_task"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="4" />
+    
+    <item android:id="@+id/menu_item_settings"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/menu_item_settings"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="5" />
+    
+</menu>
