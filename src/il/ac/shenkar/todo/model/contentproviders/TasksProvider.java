@@ -3,6 +3,8 @@
  */
 package il.ac.shenkar.todo.model.contentproviders;
 
+import il.ac.shenkar.todo.config.ToDo;
+
 import java.util.HashMap;
 
 import android.content.ContentProvider;

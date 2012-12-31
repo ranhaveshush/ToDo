@@ -4,12 +4,8 @@
 package il.ac.shenkar.todo.controller.broadcastreceivers;
 
 import il.ac.shenkar.todo.R;
+import il.ac.shenkar.todo.config.ToDo;
 import il.ac.shenkar.todo.controller.activities.TaskEditorActivity;
-import il.ac.shenkar.todo.model.contentproviders.ToDo;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;

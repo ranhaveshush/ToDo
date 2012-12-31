@@ -1,14 +1,18 @@
 package il.ac.shenkar.todo.controller.activities;
 
 import il.ac.shenkar.todo.R;
+import il.ac.shenkar.todo.config.ToDo;
 import il.ac.shenkar.todo.controller.adapters.TasksCursorAdapter;
-import il.ac.shenkar.todo.model.contentproviders.ToDo;
+import il.ac.shenkar.todo.controller.fragments.AccountPickerFragment;
+import il.ac.shenkar.todo.controller.services.AddTaskService;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.annotation.SuppressLint;
-import android.app.ListActivity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,6 +20,7 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.Menu;
@@ -32,12 +37,17 @@ import android.widget.Toast;
  * @author ran
  * 
  */
-public class TasksListActivity extends ListActivity {
+public class TasksListActivity extends FragmentActivity {
 	
 	/**
 	 * Logger tag.
 	 */
 	private static final String TAG = "TaskListActivity";
+	
+	/**
+	 * Represents the milliseconds in a day.
+	 */
+	private static final long DAY_MILLISECONDS_INTERVAL = 1000 * 60 * 60 * 24;
 	
 	/**
 	 * Request code for voice recognition activity for result.
@@ -48,7 +58,7 @@ public class TasksListActivity extends ListActivity {
 	 * Menu action bar.
 	 */
 	private Menu menu;
-	
+
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
@@ -56,9 +66,15 @@ public class TasksListActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
 		// Logger
 		Log.d(TAG, "onCreate(Bundle savedInstanceState)");
+		
+		// First application use
+		// Google account login
+		// FIXME: show the dialog only in first use use sharedprefs for that
+		AccountPickerFragment accountPickerFragment = AccountPickerFragment.newInstance(R.string.account_picker_dialog_title);
+		accountPickerFragment.show(getSupportFragmentManager(), "accountPicker");
 
 		setContentView(R.layout.activity_tasks_list);
 
@@ -71,7 +87,8 @@ public class TasksListActivity extends ListActivity {
 				cursor, CursorAdapter.FLAG_AUTO_REQUERY);
 		
 		// Gets list view widget
-		ListView listView = getListView();
+		// FIXME: check if the resource id for listview is ok
+		ListView listView = (ListView) findViewById(android.R.id.list);
 		listView.setAdapter(cursorAdapter);
 		listView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
@@ -80,6 +97,12 @@ public class TasksListActivity extends ListActivity {
 				editExistingTask(id);
 			}
 		});
+		
+		// Configure add random task from given URL service
+		Intent intent = new Intent(getApplicationContext(), AddTaskService.class);
+		PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
+		AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, new Date().getTime(), DAY_MILLISECONDS_INTERVAL, pendingIntent);
 	}
 
 	/* (non-Javadoc)
@@ -111,7 +134,7 @@ public class TasksListActivity extends ListActivity {
 			if (isVoiceRecognitionEnabled()) {
 				startVoiceRecognition();
 			} else {
-				showToastMessage("Voice recognition is not available", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "Voice recognition is not available", Toast.LENGTH_SHORT).show();
 			}
 			return true;
 		case R.id.menu_item_add_task:
@@ -153,15 +176,15 @@ public class TasksListActivity extends ListActivity {
 				}
 			// Result code for various error.
 			} else if(resultCode == RecognizerIntent.RESULT_AUDIO_ERROR) {
-				showToastMessage("Audio Error", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "Audio Error", Toast.LENGTH_SHORT).show();
 			} else if(resultCode == RecognizerIntent.RESULT_CLIENT_ERROR) {
-				showToastMessage("Client Error", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "Client Error", Toast.LENGTH_SHORT).show();
 			} else if(resultCode == RecognizerIntent.RESULT_NETWORK_ERROR) {
-				showToastMessage("Network Error", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "Network Error", Toast.LENGTH_SHORT).show();
 			} else if(resultCode == RecognizerIntent.RESULT_NO_MATCH) {
-				showToastMessage("No Match", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "No Match", Toast.LENGTH_SHORT).show();
 			} else if(resultCode == RecognizerIntent.RESULT_SERVER_ERROR) {
-				showToastMessage("Server Error", Toast.LENGTH_SHORT);
+				Toast.makeText(TasksListActivity.this, "Server Error", Toast.LENGTH_SHORT).show();
 			}
 		}
 		super.onActivityResult(requestCode, resultCode, data);
@@ -291,18 +314,5 @@ public class TasksListActivity extends ListActivity {
 		intent.putExtra(ToDo.Extras.EXTRA_TASK_ID, taskId);
 		startActivity(intent);
 	}
-	
-	/**
-	 * Shows a toast message.
-	 * 
-	 * @param message String the message to toast
-	 */
-	private void showToastMessage(String text, int duration) {
-		// Logger
-		Log.d(TAG, "showToastMessage(String text, int duration)");
-		
-		Toast.makeText(TasksListActivity.this, text, duration).show();
-	}
-
 	
 }

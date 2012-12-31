@@ -7,7 +7,10 @@
         android:minSdkVersion="4"
         android:targetSdkVersion="15" />
     
-    <uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -48,6 +51,9 @@
 			    <action android:name="il.ac.shenkar.todo.ACTION_DATETIME_REMINDER_BROADCAST" />
 			</intent-filter>
 		</receiver>
+		<service
+		    android:name=".controller.services.AddTaskService">
+		</service>
     </application>
 
 </manifest>

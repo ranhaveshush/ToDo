@@ -2,6 +2,9 @@
 
     <string name="app_name">ToDo</string>
     
+    <!-- Account Picker Dialog Framgent -->
+    <string name="account_picker_dialog_title">Choose which google account to sync with</string>
+    
     <!-- Task list activity -->
     <string name="title_activity_tasks_list">Tasks</string>
     <string name="menu_item_microphone">Microphone</string>
@@ -15,6 +18,7 @@
     <string name="title_activity_task_editor">Task Editor</string>
     <string name="menu_item_save_task">Save Task</string>
     <string name="menu_item_delete_task">Delete Task</string>
+    <string name="menu_item_random_task">Fetch random Task</string>
     <string name="hint_task_title">Title</string>
     <string name="hint_task_description">Description</string>
     <string name="hint_task_reminders_label">REMINDERS</string>

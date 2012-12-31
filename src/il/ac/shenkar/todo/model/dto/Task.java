@@ -53,6 +53,18 @@ public class Task {
 		super();
 		this.title = title;
 	}
+	
+	/**
+	 * Parcial constructor.
+	 * 
+	 * @param title
+	 * @param description
+	 */
+	public Task(String title, String description) {
+		super();
+		this.title = title;
+		this.description = description;
+	}
 
 	/**
 	 * Full constructor.

@@ -4,9 +4,12 @@
 package il.ac.shenkar.todo.controller.adapters;
 
 import il.ac.shenkar.todo.R;
-import il.ac.shenkar.todo.model.contentproviders.ToDo;
+import il.ac.shenkar.todo.config.ToDo;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.widget.CursorAdapter;
@@ -42,8 +45,14 @@ public class TasksCursorAdapter extends CursorAdapter {
 		public void onClick(View view) {
 			// Gets the task's to delete id
 			long taskToDeleteId = (Long) view.getTag();
+			// Constructs the task to delete URI
 			Uri taskToDeleteUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_URI, taskToDeleteId);
-			
+			// Cancels the datetime reminder notification, if any
+			Intent intent = new Intent(ToDo.Actions.ACTION_DATETIME_REMINDER_BROADCAST);
+			PendingIntent pendingIntent = PendingIntent.getBroadcast(context, ((Long)taskToDeleteId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+			AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+			alarmManager.cancel(pendingIntent);
+			pendingIntent.cancel();
 			// Deletes the task from the database
 			context.getContentResolver().delete(taskToDeleteUri, null, null);
 		}

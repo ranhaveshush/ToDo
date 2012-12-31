@@ -1,17 +1,23 @@
 package il.ac.shenkar.todo.controller.activities;
 
 import il.ac.shenkar.todo.R;
+import il.ac.shenkar.todo.utilities.Utils;
+import il.ac.shenkar.todo.config.ToDo;
 import il.ac.shenkar.todo.controller.fragments.DatePickerFragment;
 import il.ac.shenkar.todo.controller.fragments.DatePickerFragment.OnDatePickedListener;
 import il.ac.shenkar.todo.controller.fragments.TimePickerFragment;
 import il.ac.shenkar.todo.controller.fragments.TimePickerFragment.OnTimePickedListener;
-import il.ac.shenkar.todo.model.contentproviders.ToDo;
 import il.ac.shenkar.todo.model.dto.Task;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import org.json.JSONException;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -20,11 +26,11 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -73,17 +79,6 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
      * Simple date formater represents datetime by locale format.
      */
     private static final SimpleDateFormat simpleDateFormatDateTime = new SimpleDateFormat(DateTimeFormat, Locale.getDefault());
-	
-	/*
-     * Creates a projection that returns the task ID and the task contents.
-     */
-    private static final String[] PROJECTION =
-        new String[] {
-            ToDo.Tasks._ID,
-            ToDo.Tasks.COLUMN_NAME_TITLE,
-            ToDo.Tasks.COLUMN_NAME_DESCRIPTION,
-            ToDo.Tasks.COLUMN_NAME_DATETIME
-    };
 	
 	/**
 	 * Task Editor states enum.
@@ -232,6 +227,15 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 		case R.id.menu_item_save_task:
 			saveTask();
 			return true;
+		case R.id.menu_item_random_task:
+			URL url = null;
+			try {
+				url = new URL(Utils.URL_ADDRESS);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+			new GetRandomTaskFromUrl().execute(url);
+			return true;
 		case R.id.menu_item_delete_task:
 			deleteTask();
 			return true;
@@ -254,7 +258,7 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 			values.put(ToDo.Tasks.COLUMN_NAME_TITLE, textTitle.toString());
 		// If title text is empty, notify user
 		} else {
-			showToastMessage("Failed to edit task, fill Title field", Toast.LENGTH_SHORT);
+			Toast.makeText(TaskEditorActivity.this, "Failed to edit task, fill Title field", Toast.LENGTH_SHORT).show();
 			return;
 		}
 		
@@ -319,15 +323,22 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	}
 	
 	/**
-	 * Delete a task and returns to the parent activity (TasksListActivity).
+	 * Deletes a task and returns to the parent activity (TasksListActivity).
 	 * There is no need in deleting the task because it was not presisted,
 	 * So jsut redirects to the parent activity (TasksListActivity).
 	 */
 	private void deleteTask() {
 		switch (state) {
 		case EDIT_EXISTING_TASK:
-			// Delete persisted task
+			// Constructs the task to delete URI
 			Uri taskToDeleteUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_ID_URI_BASE, taskId);
+			// Cancels the datetime reminder notification, if any
+			Intent intent = new Intent(ToDo.Actions.ACTION_DATETIME_REMINDER_BROADCAST);
+			PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), ((Long)taskId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+			AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+			alarmManager.cancel(pendingIntent);
+			pendingIntent.cancel();
+			// Deletes persisted task
 			getContentResolver().delete(taskToDeleteUri, null, null);
 			break;
 		case EDIT_NEW_TASK:
@@ -361,7 +372,7 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 			// If datetime isn't valid, in the present or past
 			} else {
 				// Notify the user
-				showToastMessage("Invalid time", Toast.LENGTH_SHORT);
+				Toast.makeText(TaskEditorActivity.this, "Invalid time", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
@@ -389,7 +400,7 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 			// If datetime isn't valid, in the present or past
 			} else {
 				// Notify the user
-				showToastMessage("Invalid date", Toast.LENGTH_SHORT);
+				Toast.makeText(TaskEditorActivity.this, "Invalid date", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
@@ -420,7 +431,7 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 		// Builds URI to the task to edit
 		Uri taskToEditUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_URI, taskId);
 		// Gets cursor to the task to edit
-		Cursor cursor = getContentResolver().query(taskToEditUri, PROJECTION, null, null, null);
+		Cursor cursor = getContentResolver().query(taskToEditUri, ToDo.Tasks.PROJECTION, null, null, null);
 		
 		// If task to edit was found
 		if (cursor != null && cursor.moveToFirst()) {
@@ -438,15 +449,51 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	}
 	
 	/**
-	 * Shows a toast message.
+	 * Gets random task from given URL.
 	 * 
-	 * @param message String the message to toast
+	 * @author ran
+	 *
 	 */
-	private void showToastMessage(String text, int duration) {
-		// Logger
-		Log.d(TAG, "showToastMessage(String text, int duration)");
+	private class GetRandomTaskFromUrl extends AsyncTask<URL, Void, Task> {
+
+		/* (non-Javadoc)
+		 * Runs in background thread.
+		 * Gets the random task from a URL.
+		 * Sends the random task to onPostExecute(Task).
+		 * 
+		 * @see android.os.AsyncTask#doInBackground(Params[])
+		 */
+		@Override
+		protected Task doInBackground(URL... params) {
+			Task randomTask = null;
+			try {
+				randomTask = Utils.featchRandomTaskFromUrl(params[0]);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				Toast.makeText(TaskEditorActivity.this, "Network connection problem", Toast.LENGTH_SHORT).show();
+				e.printStackTrace();
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			return randomTask;
+		}
 		
-		Toast.makeText(TaskEditorActivity.this, text, duration).show();
+		/* (non-Javadoc)
+		 * Runs in UI thred.
+		 * Gets the random task from doInBackground(URL).
+		 * Renders the random task data.
+		 * 
+		 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+		 */
+		@Override
+		protected void onPostExecute(Task result) {
+			// Sets edit text task's title
+			editTextTitle.setText(result.getTitle());
+			// Sets edit text task's description
+			editTextDescription.setText(result.getDescription());
+		}
+		
 	}
 	
 }
