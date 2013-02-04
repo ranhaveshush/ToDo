@@ -5,13 +5,14 @@ package il.ac.shenkar.todo.controller.adapters;
 
 import il.ac.shenkar.todo.R;
 import il.ac.shenkar.todo.config.ToDo;
+import il.ac.shenkar.todo.model.dao.tasks.TasksDAOFactory;
+import il.ac.shenkar.todo.model.dao.tasks.logic.ITasksDAO;
+import il.ac.shenkar.todo.utilities.SyncUtils;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.api.services.tasks.model.Task;
+
 /**
  * @author ran
  * 
@@ -27,14 +30,19 @@ import android.widget.TextView;
 public class TasksCursorAdapter extends CursorAdapter {
 
 	/**
-	 * Context.
+	 * Holds the invoking context.
 	 */
-	private Context context = null;
+	private final Context context;;
 
 	/**
 	 * LyoutInflater.
 	 */
-	private LayoutInflater inflater = null;
+	private final LayoutInflater inflater;
+	
+	/**
+	 * Holds the dao to the tasks resouce.
+	 */
+	private final ITasksDAO tasksDAO;
 
 	/**
 	 * OnClickListener for the done button.
@@ -44,17 +52,19 @@ public class TasksCursorAdapter extends CursorAdapter {
 		@Override
 		public void onClick(View view) {
 			// Gets the task's to delete id
-			long taskToDeleteId = (Long) view.getTag();
-			// Constructs the task to delete URI
-			Uri taskToDeleteUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_URI, taskToDeleteId);
+			long taskToDeleteClientId = (Long) view.getTag();
 			// Cancels the datetime reminder notification, if any
 			Intent intent = new Intent(ToDo.Actions.ACTION_DATETIME_REMINDER_BROADCAST);
-			PendingIntent pendingIntent = PendingIntent.getBroadcast(context, ((Long)taskToDeleteId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent pendingIntent = PendingIntent.getBroadcast(context, ((Long)taskToDeleteClientId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
 			AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 			alarmManager.cancel(pendingIntent);
 			pendingIntent.cancel();
-			// Deletes the task from the database
-			context.getContentResolver().delete(taskToDeleteUri, null, null);
+			// FIXME: cancel here location notification eather.
+			// Deletes the task
+			Task taskToDelete = tasksDAO.get(taskToDeleteClientId);
+			tasksDAO.delete(taskToDelete);
+			// Syncs with the cloud
+			SyncUtils.syncWithGoogleTasks();
 		}
 	};
 
@@ -69,6 +79,7 @@ public class TasksCursorAdapter extends CursorAdapter {
 		super(context, cursor, flags);
 		this.context = context;
 		this.inflater = LayoutInflater.from(context);
+		this.tasksDAO = TasksDAOFactory.getFactory(context, TasksDAOFactory.SQLITE).getTasksDAO();
 	}
 
 	/* (non-Javadoc)
@@ -86,7 +97,7 @@ public class TasksCursorAdapter extends CursorAdapter {
 		textViewTitle.setText(taskTitle);
 		// Sets the tag of the button to the task's id.
 		// For later delete reference.
-		buttonDone.setTag(cursor.getLong(ToDo.Tasks.COLUMN_POSITION_ID));
+		buttonDone.setTag(cursor.getLong(ToDo.Tasks.COLUMN_POSITION_CLIENT_ID));
 		buttonDone.setOnClickListener(buttonDoneOnClickListener);
 	}
 

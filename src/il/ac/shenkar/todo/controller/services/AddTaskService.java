@@ -3,9 +3,10 @@
  */
 package il.ac.shenkar.todo.controller.services;
 
-import il.ac.shenkar.todo.utilities.Utils;
 import il.ac.shenkar.todo.config.ToDo;
-import il.ac.shenkar.todo.model.dto.Task;
+import il.ac.shenkar.todo.model.dao.tasks.TasksDAOFactory;
+import il.ac.shenkar.todo.model.dao.tasks.logic.ITasksDAO;
+import il.ac.shenkar.todo.utilities.RandomTaskUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -14,9 +15,11 @@ import java.net.URL;
 import org.json.JSONException;
 
 import android.app.IntentService;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
+
+import com.google.api.services.tasks.model.Task;
 
 /**
  * This class adds a random task to the tasks content provider
@@ -25,13 +28,21 @@ import android.widget.Toast;
  * @author ran
  *
  */
+// FIXME: delete this before submission
 public class AddTaskService extends IntentService {
+	
+	/**
+	 * Holds the dao to the tasks resouce.
+	 */
+	private final ITasksDAO tasksDAO;
 
 	/**
 	 * Default constructor.
 	 */
-	public AddTaskService() {
+	public AddTaskService(Context context) {
 		super("AddTaskService");
+		
+		this.tasksDAO = TasksDAOFactory.getFactory(context, TasksDAOFactory.SQLITE).getTasksDAO();
 	}
 
 	/* (non-Javadoc)
@@ -41,18 +52,14 @@ public class AddTaskService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		try {
 			// Gets the random task from a given URL
-			URL url = new URL(Utils.URL_ADDRESS);
-			Task randomTask = Utils.featchRandomTaskFromUrl(url);
+			URL url = new URL(RandomTaskUtils.URL_ADDRESS);
+			Task randomTask = RandomTaskUtils.featchRandomTaskFromUrl(url);
 			
-			// Saves the values fo the random task
-			ContentValues values = new ContentValues();
-			values.putNull(ToDo.Tasks._ID);
-			values.put(ToDo.Tasks.COLUMN_NAME_TITLE, randomTask.getTitle());
-			values.put(ToDo.Tasks.COLUMN_NAME_DESCRIPTION, randomTask.getDescription());
-			values.putNull(ToDo.Tasks.COLUMN_NAME_DATETIME);
+			// Sets the random task's task list id
+			randomTask.set(ToDo.Tasks.COLUMN_NAME_TASKLIST_ID, "@default");
 			
 			// Persists the random task to tasks table through the content provider
-			getContentResolver().insert(ToDo.Tasks.CONTENT_URI, values);
+			tasksDAO.insert(randomTask);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

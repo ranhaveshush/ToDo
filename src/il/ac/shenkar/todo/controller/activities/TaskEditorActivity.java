@@ -1,43 +1,49 @@
 package il.ac.shenkar.todo.controller.activities;
 
 import il.ac.shenkar.todo.R;
-import il.ac.shenkar.todo.utilities.Utils;
 import il.ac.shenkar.todo.config.ToDo;
 import il.ac.shenkar.todo.controller.fragments.DatePickerFragment;
 import il.ac.shenkar.todo.controller.fragments.DatePickerFragment.OnDatePickedListener;
 import il.ac.shenkar.todo.controller.fragments.TimePickerFragment;
 import il.ac.shenkar.todo.controller.fragments.TimePickerFragment.OnTimePickedListener;
-import il.ac.shenkar.todo.model.dto.Task;
+import il.ac.shenkar.todo.model.dao.tasks.TasksDAOFactory;
+import il.ac.shenkar.todo.model.dao.tasks.logic.ITasksDAO;
+import il.ac.shenkar.todo.utilities.DateTimeUtils;
+import il.ac.shenkar.todo.utilities.RandomTaskUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import org.json.JSONException;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.api.client.util.DateTime;
+import com.google.api.services.tasks.model.Task;
 
 /**
  * @author ran
@@ -51,34 +57,29 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	private static final String TAG = "TaskEditorActivity";
 	
 	/**
-     * Time format string.
-     */
-    private static final String TimeFormat = "HH:mm"; 
-    
-    /**
-     * Date format string.
-     */
-    private static final String DateFormat = "yyyy-MM-dd";
-    
-    /**
-     * Date Time format string.
-     */
-    private static final String DateTimeFormat = "yyyy-MM-dd HH:mm";
-    
-    /**
-     * Simple date formater represents time by locale format.
-     */
-    private static final SimpleDateFormat simpleDateFormatTime = new SimpleDateFormat(TimeFormat, Locale.getDefault());
-    
-    /**
-     * Simple date formater represents date by locale format.
-     */
-    private static final SimpleDateFormat simpleDateFormatDate = new SimpleDateFormat(DateFormat, Locale.getDefault());
-    
-    /**
-     * Simple date formater represents datetime by locale format.
-     */
-    private static final SimpleDateFormat simpleDateFormatDateTime = new SimpleDateFormat(DateTimeFormat, Locale.getDefault());
+	 * Fragment's tag due date picker dialog fragment.
+	 */
+	private static final String FRAGMENT_TAG_DUE_DATE_PICKER = "DueDatePicker";
+	
+	/**
+	 * Fragment's tag reminder date picker dialog fragment.
+	 */
+	private static final String FRAGMENT_TAG_REMINDER_DATE_PICKER = "ReminderDatePicker";
+	
+	/**
+	 * Fragment's tag reminder time picker dialog fragment.
+	 */
+	private static final String FRAGMENT_TAG_REMINDER_TIME_PICKER = "ReminderTimePicker";
+	
+	/**
+	 * The threshold of the autocomplete address.
+	 */
+	private static final int AUTO_COMPLETE_TEXT_VIEW_THRESHOLD = 3;
+	
+	/**
+	 * The address locale.
+	 */
+	private static final Locale LOCALE = new Locale("IW", "IL");
 	
 	/**
 	 * Task Editor states enum.
@@ -99,10 +100,9 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
     private State state;
     
     /**
-     * Current task to edit id.
-     * When -1 means task not existing (not persisted).
+     * Holds the task to edit info.
      */
-    private long taskId = -1;
+    private Task taskToEdit = new Task();
     
     /**
      * Edit text represents the task's title.
@@ -110,45 +110,114 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
     private EditText editTextTitle = null;
     
     /**
-     * Edit text represents the task's description.
+     * Edit text represents the task's notes.
      */
-    private EditText editTextDescription = null;
+    private EditText editTextNotes = null;
     
     /**
-     * Text view represents the task's time.
+     * Text view represents the task's due date.
      */
-    private TextView textViewTime = null;
+    private TextView textViewDueDate = null;
     
     /**
-     * Text view represents the task's date.
+     * Text view represents the task's reminder datetime.
      */
-    private TextView textViewDate = null;
+    private TextView textViewReminderDateTime = null;
+
+	/**
+	 * Autocomplete text view represents the task's reminder location (address).
+	 */
+	private AutoCompleteTextView autoCompleteTextViewAddress = null;
+
+	/**
+	 * Autocomplete dropdown list adapter.
+	 */
+	private ArrayAdapter<String> autoCompleteAdapter = null;
+    
+    /**
+     * Holds the dao to the tasks resouce.
+     */
+    private ITasksDAO tasksDAO = null;
 
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		// Logger
+		Log.d(TAG, "onCreate(Bundle savedInstanceState)");
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_task_editor);
 		
+		tasksDAO = TasksDAOFactory.getFactory(TaskEditorActivity.this, TasksDAOFactory.SQLITE).getTasksDAO();
+		
 		// Gets all the widgets
 		editTextTitle = (EditText) findViewById(R.id.edit_text_task_title);
-		editTextDescription = (EditText) findViewById(R.id.edit_text_task_description);
-		textViewTime = (TextView) findViewById(R.id.text_view_task_reminder_time);
-		textViewTime.setOnClickListener(new OnClickListener() {
+		editTextTitle.addTextChangedListener(new TextWatcher() {
 			@Override
-			public void onClick(View v) {
-				DialogFragment timePickerFragment = new TimePickerFragment();
-				timePickerFragment.show(getSupportFragmentManager(), "timePicker");
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				TaskEditorActivity.this.setTitle(s);
+			}
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+			@Override
+			public void afterTextChanged(Editable s) {
 			}
 		});
-		textViewDate = (TextView) findViewById(R.id.text_view_task_reminder_date);
-		textViewDate.setOnClickListener(new OnClickListener() {
+		editTextNotes = (EditText) findViewById(R.id.edit_text_task_notes);
+		textViewDueDate = (TextView) findViewById(R.id.text_view_task_due_date);
+		textViewDueDate.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				DialogFragment datePickerFragment = new DatePickerFragment();
-				datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+				datePickerFragment.show(getSupportFragmentManager(), FRAGMENT_TAG_DUE_DATE_PICKER);
+			}
+		});
+		textViewReminderDateTime = (TextView) findViewById(R.id.text_view_task_reminder_datetime);
+		textViewReminderDateTime.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// Calls date picker fragment dialog
+				DialogFragment datePickerFragment = new DatePickerFragment();
+				datePickerFragment.show(getSupportFragmentManager(), FRAGMENT_TAG_REMINDER_DATE_PICKER);
+				// Calls time picker fragment dialog
+				DialogFragment timePickerFragment = new TimePickerFragment();
+				timePickerFragment.show(getSupportFragmentManager(), FRAGMENT_TAG_REMINDER_TIME_PICKER);
+			}
+		});
+		
+		autoCompleteAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line);
+
+		autoCompleteTextViewAddress = (AutoCompleteTextView) findViewById(R.id.auto_complete_text_view_task_reminder_location);
+		autoCompleteTextViewAddress.setThreshold(AUTO_COMPLETE_TEXT_VIEW_THRESHOLD);
+		autoCompleteTextViewAddress.setAdapter(autoCompleteAdapter);
+		autoCompleteTextViewAddress.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				String toAutoCompleteAddressStr = s.toString();
+				// If the address string isn't empty and longer then threshold, autocomplete
+				if (!"".equals(toAutoCompleteAddressStr) && toAutoCompleteAddressStr.length() >= AUTO_COMPLETE_TEXT_VIEW_THRESHOLD) {
+					new AddressesAutoCompleteTask().execute(new String[] { toAutoCompleteAddressStr });
+				}
+			}
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+			@Override
+			public void afterTextChanged(Editable s) {
+			}
+		});
+		autoCompleteTextViewAddress.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				String selectedAddressStr = ((TextView) view).getText().toString();
+				autoCompleteTextViewAddress.setText(selectedAddressStr);
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+				// Do nothing.
 			}
 		});
 		
@@ -164,56 +233,37 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 			state = State.EDIT_NEW_TASK;
 		}
 		
-		// Gets the state
+		// Sets task to edit task list id
+		String taskListId = extras.getString(ToDo.Extras.EXTRA_TASK_LIST_ID);
+		taskToEdit.set(ToDo.Tasks.COLUMN_NAME_TASKLIST_ID, taskListId);
+		
+		// Operates according to the current state
 		switch (state) {
 		case EDIT_EXISTING_TASK:
-			// Checks extras to find task to edit id
-			if (extras != null && extras.containsKey(ToDo.Extras.EXTRA_TASK_ID)) {
-				// Gets the existing task's id
-				taskId = extras.getLong(ToDo.Extras.EXTRA_TASK_ID);
-				
-				// Reads the task from the content provider
-				Task taskToEdit = readTaskById(taskId);
-				
-				if (taskToEdit != null) {
-					// Sets edit text task's title
-					editTextTitle.setText(taskToEdit.getTitle());
-					// Sets edit text task's description
-					editTextDescription.setText(taskToEdit.getDescription());
-					long dateTimeMilliSec = taskToEdit.getDateTimeMilliSec();
-					if (dateTimeMilliSec != 0) {
-						// Gets datetime date object
-						Date dateTime = new Date(dateTimeMilliSec);
-						// Sets text view task reminder time
-						textViewTime.setText(simpleDateFormatTime.format(dateTime));
-						// Sets text view task reminder date
-						textViewDate.setText(simpleDateFormatDate.format(dateTime));
-					}
-				}
-			} else {
-				// FIXME: handle error woth assersions
-			}
+			// Sets task to edit client id
+			long taskClientId = extras.getLong(ToDo.Extras.EXTRA_TASK_ID);
+			// Gets the task to edit from local db
+			taskToEdit = tasksDAO.get(taskClientId);
+			// Views the fields of the task to edit
+			viewTask(taskToEdit);
 			break;
 		case EDIT_NEW_TASK:
-			// Checks extras to find new taskToEdit title
-			if (extras != null && extras.containsKey(ToDo.Extras.EXTRA_TASK_TITLE)) {
-				// Gets the new task's title
-				String taskToEditTitle = extras.getString(ToDo.Extras.EXTRA_TASK_TITLE);
-				
-				// Sets edit text task's title
-				editTextTitle.setText(taskToEditTitle);
-			} else {
-				// FIXME: handle error woth assersions
-			}
+			// Gets the new task's title
+			String taskToEditTitle = extras.getString(ToDo.Extras.EXTRA_TASK_TITLE);
+			// Sets edit text task's title
+			editTextTitle.setText(taskToEditTitle);
 			break;
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
 	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		// Logger
+		Log.d(TAG, "onCreateOptionsMenu(Menu menu)");
+		
 		getMenuInflater().inflate(R.menu.activity_task_editor, menu);
 		return true;
 	}
@@ -223,6 +273,9 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	 */
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		// Logger
+		Log.d(TAG, "onOptionsItemSelected(MenuItem item)");
+		
 		switch (item.getItemId()) {
 		case R.id.menu_item_save_task:
 			saveTask();
@@ -230,7 +283,7 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 		case R.id.menu_item_random_task:
 			URL url = null;
 			try {
-				url = new URL(Utils.URL_ADDRESS);
+				url = new URL(RandomTaskUtils.URL_ADDRESS);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
@@ -243,83 +296,98 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 			return super.onOptionsItemSelected(item);
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see android.support.v4.app.FragmentActivity#onStart()
+	 */
+	@Override
+	protected void onStart() {
+		super.onStart();
+		
+		// Logger
+		Log.d(TAG, "onStart()");
+	}
+
+	/* (non-Javadoc)
+	 * @see android.support.v4.app.FragmentActivity#onResume()
+	 */
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		// Logger
+		Log.d(TAG, "onResume()");
+	}
+
+	/**
+	 * View renders a given task fields.
+	 * 
+	 * @param task	Task to view
+	 */
+	private void viewTask(Task task) {
+		// Logger
+		Log.d(TAG, "viewTask(Task taskToEdit)");
+		
+		String taskTitle = task.getTitle();
+		editTextTitle.setText(taskTitle);
+		String taskNotes = task.getNotes();
+		editTextNotes.setText(taskNotes);
+		DateTime taskDue = task.getDue();
+		textViewDueDate.setText(DateTimeUtils.getDateFromDateTime(taskDue));
+		String datetimeReminder = (String) task.get(ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER);
+		textViewReminderDateTime.setText(datetimeReminder);
+		String locationReminder = (String) task.get(ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER);
+		autoCompleteTextViewAddress.setText(locationReminder);
+	}
 
 	/**
 	 * Saves a new task and returns to the parent activity (TasksListActivity).
 	 */
 	private void saveTask() {
-		// Sets task's info after editing
-		ContentValues values = new ContentValues();
+		// Logger
+		Log.d(TAG, "saveTask()");
 		
 		// Gets the task title
-		Editable textTitle = editTextTitle.getText();
-		// If title text isn't empty, persist title text
-		if (textTitle != null) {
-			values.put(ToDo.Tasks.COLUMN_NAME_TITLE, textTitle.toString());
+		String textTitle = editTextTitle.getText().toString();
 		// If title text is empty, notify user
-		} else {
-			Toast.makeText(TaskEditorActivity.this, "Failed to edit task, fill Title field", Toast.LENGTH_SHORT).show();
+		if (TextUtils.isEmpty(textTitle)) {
+			Toast.makeText(TaskEditorActivity.this, "Failed to save task, title is empty", Toast.LENGTH_SHORT).show();
 			return;
 		}
+		taskToEdit.setTitle(textTitle);
 		
-		// Gets the task description
-		Editable textDescription = editTextDescription.getText();
-		// If description text isn't empty, persist description text
-		if (textDescription != null) {
-			values.put(ToDo.Tasks.COLUMN_NAME_DESCRIPTION, textDescription.toString());
-		// If description text is empty
-		} else {
-			values.putNull(ToDo.Tasks.COLUMN_NAME_DESCRIPTION);
+		// Gets the task notes
+		String textNotes = editTextNotes.getText().toString();
+		// If notes text isn't empty, persist it
+		if (!TextUtils.isEmpty(textNotes)) {
+			taskToEdit.setNotes(textNotes.toString());
 		}
-
-		// Gets the task reminder datetime
-		String textTime = (String) textViewTime.getText();
-		String textDate = (String) textViewDate.getText();
-		Date dateTime = fromStringsToDate(textDate, textTime);
-		// If datetime reminder isn't empty, persist datetime reminder
-		if (dateTime != null) {
-			values.put(ToDo.Tasks.COLUMN_NAME_DATETIME, dateTime.getTime());
-		// If datetime reminder is empty
-		} else {
-			values.putNull(ToDo.Tasks.COLUMN_NAME_DATETIME);
+		
+		// Gets the task locaiton reminder
+		String textLocationReminder = autoCompleteTextViewAddress.getText().toString();
+		// If out of focus, persist address
+		if (!TextUtils.isEmpty(textLocationReminder)) {
+			taskToEdit.set(ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER, textLocationReminder);
 		}
 
 		switch (state) {
 		case EDIT_EXISTING_TASK:
-			// Persist task id
-			values.put(ToDo.Tasks._ID, taskId);
-			// Persists the changes to the existing task
-			Uri taskToEditUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_ID_URI_BASE, taskId);
-			getContentResolver().update(taskToEditUri, values, null, null);
+			// Updates the task to save
+			tasksDAO.update(taskToEdit);
+			// Notify the user, task updated
+			Toast.makeText(TaskEditorActivity.this, "Task updated", Toast.LENGTH_SHORT).show();
 			break;
 		case EDIT_NEW_TASK:
-			// This null persistance will generate a new task id by sqlite
-			values.putNull(ToDo.Tasks._ID);
-			// Persists the new task and returns the generated uri with newly created task id
-			Uri newlyCreatedTaskUri = getContentResolver().insert(ToDo.Tasks.CONTENT_URI, values);
-			// Gets the newly created task id
-			taskId = ContentUris.parseId(newlyCreatedTaskUri);
+			// Inserts the task to save
+			tasksDAO.insert(taskToEdit);
+			// Notify the user, task updated
+			Toast.makeText(TaskEditorActivity.this, "Task created", Toast.LENGTH_SHORT).show();
 			break;
 		}
 		
-		// If datetime reminder isn't empty, persist datetime reminder
-		if (dateTime != null) {
-			// Reads the task from the content provider
-			Task task = readTaskById(taskId);
-			if (task != null) {
-				// Sets notifications for the task reminders
-				Intent intent = new Intent(ToDo.Actions.ACTION_DATETIME_REMINDER_BROADCAST);
-				intent.putExtra(ToDo.Extras.EXTRA_TASK_ID, taskId);
-				intent.putExtra(ToDo.Extras.EXTRA_TASK_TITLE, task.getTitle());
-				intent.putExtra(ToDo.Extras.EXTRA_TASK_DESCRIPTION, task.getDescription());
-				PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), ((Long)taskId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-				AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-				alarmManager.set(AlarmManager.RTC_WAKEUP, dateTime.getTime(), pendingIntent);
-			}
-		}
-
-		// Close this activity
-		finish();
+		// Syncs with the cloud
+		// FIXME: uncomment the sync utils
+		//SyncUtils.syncWithGoogleTasks();
 	}
 	
 	/**
@@ -328,52 +396,41 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	 * So jsut redirects to the parent activity (TasksListActivity).
 	 */
 	private void deleteTask() {
+		// Logger
+		Log.d(TAG, "deleteTask()");
+		
 		switch (state) {
 		case EDIT_EXISTING_TASK:
-			// Constructs the task to delete URI
-			Uri taskToDeleteUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_ID_URI_BASE, taskId);
-			// Cancels the datetime reminder notification, if any
-			Intent intent = new Intent(ToDo.Actions.ACTION_DATETIME_REMINDER_BROADCAST);
-			PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), ((Long)taskId).intValue(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-			AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-			alarmManager.cancel(pendingIntent);
-			pendingIntent.cancel();
-			// Deletes persisted task
-			getContentResolver().delete(taskToDeleteUri, null, null);
+			// Deletes the edit task
+			tasksDAO.delete(taskToEdit);
+			// Syncs with the cloud
+			//SyncUtils.syncWithGoogleTasks();
+			// Notify the user, task updated
+			Toast.makeText(TaskEditorActivity.this, "Task deleted", Toast.LENGTH_SHORT).show();
+			// Close this activity
+			finish();
 			break;
 		case EDIT_NEW_TASK:
-			// Do nothing, the task wasn't persisted 
+			// Do nothing, the task wasn't persisted
+			// Close this activity
+			finish();
 			break;
 		}
-		
-		// Close this activity
-		finish();
 	}
 
 	/* (non-Javadoc)
 	 * @see il.ac.shenkar.todo.controller.fragments.TimePickerFragment.OnTimePickedListener#onTimePicked(int, int)
 	 */
 	@Override
-	public void onTimePicked(int hourOfDay, int minute) {
-		// Gets the datetime picked
-		String textTime = hourOfDay + ":" + minute;
-		String textDate = (String) textViewDate.getText();
+	public void onTimePicked(String fragmentTag, int hourOfDay, int minute) {
+		// Logger
+		Log.d(TAG, "(String fragmentTag, int hourOfDay, int minute)");
 		
-		// If date wasn't choosen, just set time
-		if ("".equals(textDate)) {
-			textViewTime.setText(hourOfDay + ":" + minute);
-		// If date was choosen, validate the datetime
-		} else {
-			Date dateTime = fromStringsToDate(textDate, textTime);
-			// If datetime is valid, in the future
-			if (dateTime != null && dateTime.compareTo(new Date()) > 0) {
-				// Sets the time picked
-				textViewTime.setText(hourOfDay + ":" + minute);
-			// If datetime isn't valid, in the present or past
-			} else {
-				// Notify the user
-				Toast.makeText(TaskEditorActivity.this, "Invalid time", Toast.LENGTH_SHORT).show();
-			}
+		// If returned from reminder time picker dialog fragment
+		if (FRAGMENT_TAG_REMINDER_TIME_PICKER.equals(fragmentTag)) {
+			// Sets the text view tags
+			textViewReminderDateTime.setTag(R.id.TAG_DATETIME_HOUR, hourOfDay);
+			textViewReminderDateTime.setTag(R.id.TAG_DATETIME_MINUTE, minute);
 		}
 	}
 
@@ -381,70 +438,25 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	 * @see il.ac.shenkar.todo.controller.fragments.DatePickerFragment.OnDatePickedListener#onDatePicked(int, int, int)
 	 */
 	@Override
-	public void onDatePicked(int year, int monthOfYear, int dayOfMonth) {
-		monthOfYear += 1;
-		// Gets the datetime picked
-		String textDate = year + "-" + monthOfYear + "-" + dayOfMonth;
-		String textTime = (String) textViewTime.getText();
+	public void onDatePicked(String fragmentTag, int year, int monthOfYear, int dayOfMonth) {
+		// Logger
+		Log.d(TAG, "onDatePicked(String fragmentTag, int year, int monthOfYear, int dayOfMonth)");
 		
-		// If time wasn't choosen, just set time
-		if ("".equals(textTime)) {
-			textViewDate.setText(year + "-" + monthOfYear + "-" + dayOfMonth);
-		// If time was choosen, validate the datetime
-		} else {
-			Date dateTime = fromStringsToDate(textDate, textTime);
-			// If datetime is valid, in the future
-			if (dateTime != null && dateTime.compareTo(new Date()) > 0) {
-				// Sets the date picked
-				textViewDate.setText(year + "-" + monthOfYear + "-" + dayOfMonth);
-			// If datetime isn't valid, in the present or past
-			} else {
-				// Notify the user
-				Toast.makeText(TaskEditorActivity.this, "Invalid date", Toast.LENGTH_SHORT).show();
-			}
-		}
-	}
-	
-	/**
-	 * Convert to Strings date and time to Date
-	 * 
-	 * @param date
-	 * @param time
-	 * @return
-	 */
-	private Date fromStringsToDate(String date, String time) {
-		try {
-			return simpleDateFormatDateTime.parse(date + " " + time);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
-	/**
-	 * Reads a task fromt the content provider by given task id.
-	 * 
-	 * @param taskId
-	 * @return
-	 */
-	private Task readTaskById(long taskId) {
-		// Builds URI to the task to edit
-		Uri taskToEditUri = ContentUris.withAppendedId(ToDo.Tasks.CONTENT_URI, taskId);
-		// Gets cursor to the task to edit
-		Cursor cursor = getContentResolver().query(taskToEditUri, ToDo.Tasks.PROJECTION, null, null, null);
-		
-		// If task to edit was found
-		if (cursor != null && cursor.moveToFirst()) {
-			// Gets task title
-			String taskTitle = cursor.getString(ToDo.Tasks.COLUMN_POSITION_TITLE);
-			// Gets task description
-			String taskDescription = cursor.getString(ToDo.Tasks.COLUMN_POSITION_DESCRIPTION);
-			// Gets task datetime
-			long dateTimeMilliSec = cursor.getLong(ToDo.Tasks.COLUMN_POSITION_DATETIME);
-			
-			return new Task(taskId, taskTitle, taskDescription, dateTimeMilliSec);
-		} else {
-			return null;
+		// If returned from due date picker dialog fragment
+		if (FRAGMENT_TAG_DUE_DATE_PICKER.equals(fragmentTag)) {
+			String dateStr = DateTimeUtils.formatDateToString(year, monthOfYear, dayOfMonth);
+			textViewDueDate.setText("Due " + dateStr);
+			DateTime due = DateTimeUtils.fromStringToDateTime(dateStr);
+			taskToEdit.setDue(due);
+		// If returned from reminder date picker dialog fragment
+		} else if (FRAGMENT_TAG_REMINDER_DATE_PICKER.equals(fragmentTag)) {
+			int hourOfDay = (Integer) textViewReminderDateTime.getTag(R.id.TAG_DATETIME_HOUR);
+			int minute = (Integer) textViewReminderDateTime.getTag(R.id.TAG_DATETIME_MINUTE);
+			String timeStr = DateTimeUtils.formatTimeToString(hourOfDay, minute);
+			String dateStr = DateTimeUtils.formatDateToString(year, monthOfYear, dayOfMonth);
+			textViewReminderDateTime.setText("Remind me at " + timeStr + " " + dateStr);
+			DateTime dateTime = DateTimeUtils.fromStringsToDateTime(dateStr, timeStr);
+			taskToEdit.set(ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER, dateTime.toStringRfc3339());
 		}
 	}
 	
@@ -455,7 +467,12 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 	 *
 	 */
 	private class GetRandomTaskFromUrl extends AsyncTask<URL, Void, Task> {
-
+		
+		/**
+		 * Logger's tag.
+		 */
+		private static final String TAG = "GetRandomTaskFromUrl: TaskEditorActivity";
+		
 		/* (non-Javadoc)
 		 * Runs in background thread.
 		 * Gets the random task from a URL.
@@ -464,10 +481,13 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 		 * @see android.os.AsyncTask#doInBackground(Params[])
 		 */
 		@Override
-		protected Task doInBackground(URL... params) {
+		protected Task doInBackground(URL... urls) {
+			// Logger
+			Log.d(TAG, "doInBackground(URL... urls)");
+			
 			Task randomTask = null;
 			try {
-				randomTask = Utils.featchRandomTaskFromUrl(params[0]);
+				randomTask = RandomTaskUtils.featchRandomTaskFromUrl(urls[0]);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -487,13 +507,175 @@ public class TaskEditorActivity extends FragmentActivity implements OnTimePicked
 		 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
 		 */
 		@Override
-		protected void onPostExecute(Task result) {
+		protected void onPostExecute(Task task) {
+			// Logger
+			Log.d(TAG, "onPostExecute(Task task)");
+						
 			// Sets edit text task's title
-			editTextTitle.setText(result.getTitle());
-			// Sets edit text task's description
-			editTextDescription.setText(result.getDescription());
+			editTextTitle.setText(task.getTitle());
+			// Sets edit text task's notes
+			editTextNotes.setText(task.getNotes());
 		}
 		
 	}
+	
+	/**
+	 * Auto complete async task to geocode addresses.
+	 * 
+	 * @author ran
+	 * 
+	 */
+	private class AddressesAutoCompleteTask extends AsyncTask<String, Void, List<Address>> {
+		
+		/**
+		 * Logger's tag.
+		 */
+		private static final String TAG = "AddressesAutoCompleteTask: TaskEditorActivity";
+
+		/**
+		 * Max results per autocomplete.
+		 */
+		private static final int MAX_RESULTS = 3;
+
+		@Override
+		protected List<Address> doInBackground(String... addresses) {
+			// Logger
+			Log.d(TAG, "doInBackground(String... addresses)");
+			
+			String toAutoCompleteAddressStr = addresses[0];
+				try {
+					return new Geocoder(TaskEditorActivity.this, LOCALE)
+							.getFromLocationName(toAutoCompleteAddressStr, MAX_RESULTS);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			return null;
+		}
+		@Override
+		protected void onPostExecute(List<Address> autoCompleteAddressesSuggestions) {
+			// Logger
+			Log.d(TAG, "onPostExecute(List<Address> autoCompleteAddressesSuggestions)");
+			
+			autoCompleteAdapter.clear();
+			for (Address address : autoCompleteAddressesSuggestions) {
+				String addressLine = (address.getMaxAddressLineIndex() > 0) ? address.getAddressLine(0) : "";
+				String addressLocality = (null != address.getLocality()) ? address.getLocality() : "";
+				String addressCountry = (null != address.getCountryName()) ? address.getCountryName() : "";
+				String addressText = String.format("%s, %s, %s", addressLine, addressLocality, addressCountry);
+				autoCompleteAdapter.add(addressText);
+			}
+			autoCompleteAdapter.notifyDataSetChanged();
+		}
+	}
+	
+//	/**
+//	 * Gets the address object out of the addres string.
+//	 * 
+//	 * @author ran
+//	 * 
+//	 */
+//	private class GeocodeTask extends AsyncTask<String, Void, Address> {
+//		
+//		/**
+//		 * Logger's tag.
+//		 */
+//		private static final String TAG = "GeocodeTask: TaskEditorActivity";
+//
+//		/**
+//		 * Max results per autocomplete.
+//		 */
+//		private static final int MAX_RESULTS = 1;
+//
+//		@Override
+//		protected Address doInBackground(String... addresses) {
+//			// Logger
+//			Log.d(TAG, "doInBackground(String... addresses)");
+//			
+//			String addressStr = addresses[0];
+//				try {
+//					List<Address> addressesList = new Geocoder(TaskEditorActivity.this, LOCALE)
+//					.getFromLocationName(addressStr, MAX_RESULTS);
+//					return (addressesList.isEmpty()) ? null : addressesList.get(0);
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			return null;
+//		}
+//		@Override
+//		protected void onPostExecute(Address address) {
+//			// Logger
+//			Log.d(TAG, "onPostExecute(Address address)");
+//			
+//			// If geocoding succedded
+//			if (address != null) {
+//				// Sets the address
+//				autoCompleteTextViewAddress.setTag(R.id.TAG_LOCATION_ADDRESS, address);
+//				// Notify the user geocoding succedded
+//				Toast.makeText(TaskEditorActivity.this, "Valid location address", Toast.LENGTH_SHORT).show();
+//			// If geocoding failed
+//			} else {
+//				// Notify the user geocoding failed
+//				Toast.makeText(TaskEditorActivity.this, "Invalid location address", Toast.LENGTH_SHORT).show();
+//			}
+//		}
+//	}
+	
+//	/**
+//	 * Reverse geocoding, gets latitude and longitude (the order is importent).
+//	 * Returns the address in that lat,lng.
+//	 * 
+//	 * @author ran
+//	 * 
+//	 */
+//	private class ReverseGeocodeTask extends AsyncTask<Double, Void, Address> {
+//		
+//		/**
+//		 * Logger's tag.
+//		 */
+//		private static final String TAG = "ReverseGeocodeTask: TaskEditorActivity";
+//
+//		/**
+//		 * Max results per autocomplete.
+//		 */
+//		private static final int MAX_RESULTS = 1;
+//
+//		@Override
+//		protected Address doInBackground(Double... coords) {
+//			// Logger
+//			Log.d(TAG, "doInBackground(Double... coords)");
+//			
+//			double lat = coords[0];
+//			double lng = coords[1];
+//				try {
+//					List<Address> addressesList = new Geocoder(TaskEditorActivity.this, LOCALE)
+//					.getFromLocation(lat, lng, MAX_RESULTS);
+//					return (addressesList.isEmpty()) ? null : addressesList.get(0);
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			return null;
+//		}
+//		@Override
+//		protected void onPostExecute(Address address) {
+//			// Logger
+//			Log.d(TAG, "onPostExecute(Address address)");
+//			
+//			// If reverse geocoding succedded
+//			if (address != null) {
+//				// Saves lat lng
+//				String addressLine = (address.getMaxAddressLineIndex() > 0) ? address.getAddressLine(0) : "";
+//				String addressLocality = (null != address.getLocality()) ? address.getLocality() : "";
+//				String addressCountry = (null != address.getCountryName()) ? address.getCountryName() : "";
+//				String addressText = String.format("%s, %s, %s", addressLine, addressLocality, addressCountry);
+//				autoCompleteTextViewAddress.setText(addressText);
+//				// Notify the user geocoding succedded
+//				Toast.makeText(TaskEditorActivity.this, "Valid location address", Toast.LENGTH_SHORT).show();
+//			// If reverse geocoding failed
+//			} else {
+//				// Notify the user geocoding failed
+//				Toast.makeText(TaskEditorActivity.this, "Invalid location address", Toast.LENGTH_SHORT).show();
+//			}
+//		}
+//	}
 	
 }

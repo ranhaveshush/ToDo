@@ -128,124 +128,162 @@ containing a value of this type.
         public static final int zOrderOnTop=0x7f01000d;
     }
     public static final class drawable {
-        public static final int ic_action_add_task=0x7f020000;
-        public static final int ic_action_delete=0x7f020001;
-        public static final int ic_action_edit_task=0x7f020002;
-        public static final int ic_action_microphone=0x7f020003;
-        public static final int ic_action_random=0x7f020004;
-        public static final int ic_action_remind=0x7f020005;
-        public static final int ic_action_save=0x7f020006;
-        public static final int ic_action_search=0x7f020007;
-        public static final int ic_action_settings=0x7f020008;
-        public static final int ic_launcher=0x7f020009;
+        public static final int ic_action_accounts=0x7f020000;
+        public static final int ic_action_add_task=0x7f020001;
+        public static final int ic_action_delete=0x7f020002;
+        public static final int ic_action_due=0x7f020003;
+        public static final int ic_action_edit_task=0x7f020004;
+        public static final int ic_action_microphone=0x7f020005;
+        public static final int ic_action_random=0x7f020006;
+        public static final int ic_action_refresh=0x7f020007;
+        public static final int ic_action_remind=0x7f020008;
+        public static final int ic_action_reminder_datetime=0x7f020009;
+        public static final int ic_action_reminder_location=0x7f02000a;
+        public static final int ic_action_save=0x7f02000b;
+        public static final int ic_action_search=0x7f02000c;
+        public static final int ic_action_settings=0x7f02000d;
+        public static final int ic_launcher=0x7f02000e;
     }
     public static final class id {
-        public static final int button_done=0x7f04000b;
-        public static final int edit_text_task_description=0x7f040005;
-        public static final int edit_text_task_reminder_location=0x7f040009;
-        public static final int edit_text_task_title=0x7f040004;
-        public static final int menu_item_add_task=0x7f040012;
-        public static final int menu_item_delete_task=0x7f04000d;
-        public static final int menu_item_edit_task=0x7f040013;
-        public static final int menu_item_microphone=0x7f040010;
-        public static final int menu_item_random_task=0x7f04000e;
-        public static final int menu_item_save_task=0x7f04000c;
-        public static final int menu_item_settings=0x7f04000f;
-        public static final int menu_item_task_title=0x7f040011;
-        public static final int none=0x7f040000;
-        public static final int normal=0x7f040001;
-        public static final int satellite=0x7f040002;
-        public static final int terrain=0x7f040003;
-        public static final int text_view_task_reminder_date=0x7f040008;
-        public static final int text_view_task_reminder_time=0x7f040007;
-        public static final int text_view_task_reminders_label=0x7f040006;
-        public static final int text_view_task_title=0x7f04000a;
+        public static final int TAG_DATETIME=0x7f05000a;
+        public static final int TAG_DATETIME_DAY=0x7f050007;
+        public static final int TAG_DATETIME_HOUR=0x7f050008;
+        public static final int TAG_DATETIME_MINUTE=0x7f050009;
+        public static final int TAG_DATETIME_MONTH=0x7f050006;
+        public static final int TAG_DATETIME_YEAR=0x7f050005;
+        public static final int TAG_LOCATION_ADDRESS=0x7f05000b;
+        /**  Widgets TAG ids 
+         */
+        public static final int TAG_REMINDER_ID=0x7f050004;
+        public static final int auto_complete_text_view_task_reminder_location=0x7f050015;
+        public static final int button_done=0x7f050018;
+        public static final int edit_text_task_notes=0x7f05000d;
+        public static final int edit_text_task_title=0x7f05000c;
+        public static final int image_view_task_due_date=0x7f05000f;
+        public static final int image_view_task_reminder_datetime=0x7f050012;
+        public static final int image_view_task_reminder_location=0x7f050014;
+        public static final int menu_item_accounts=0x7f050022;
+        public static final int menu_item_add_task=0x7f050020;
+        public static final int menu_item_delete_task=0x7f05001b;
+        public static final int menu_item_edit_task=0x7f050021;
+        public static final int menu_item_microphone=0x7f05001e;
+        public static final int menu_item_random_task=0x7f05001c;
+        public static final int menu_item_save_task=0x7f05001a;
+        public static final int menu_item_settings=0x7f05001d;
+        public static final int menu_item_task_title=0x7f05001f;
+        public static final int menu_settings=0x7f050019;
+        public static final int none=0x7f050000;
+        public static final int normal=0x7f050001;
+        public static final int refresh_progress=0x7f050016;
+        public static final int satellite=0x7f050002;
+        public static final int terrain=0x7f050003;
+        public static final int text_view_task_due_date=0x7f050010;
+        public static final int text_view_task_due_label=0x7f05000e;
+        public static final int text_view_task_reminder_datetime=0x7f050013;
+        public static final int text_view_task_reminders_label=0x7f050011;
+        public static final int text_view_task_title=0x7f050017;
     }
     public static final class layout {
-        public static final int activity_task_editor=0x7f030000;
-        public static final int activity_tasks_list=0x7f030001;
-        public static final int listview_item_task=0x7f030002;
-        public static final int menu_item_task_title=0x7f030003;
+        public static final int activity_credential=0x7f030000;
+        public static final int activity_task_editor=0x7f030001;
+        public static final int activity_tasks_list=0x7f030002;
+        public static final int listview_item_task=0x7f030003;
+        public static final int menu_item_task_title=0x7f030004;
     }
     public static final class menu {
-        public static final int activity_task_editor=0x7f070000;
-        public static final int activity_tasks_list=0x7f070001;
+        public static final int activity_credential=0x7f080000;
+        public static final int activity_task_editor=0x7f080001;
+        public static final int activity_tasks_list=0x7f080002;
     }
     public static final class string {
-        /**  Account Picker Dialog Framgent 
-         */
-        public static final int account_picker_dialog_title=0x7f05000c;
-        public static final int app_name=0x7f05000b;
+        public static final int app_name=0x7f06000b;
         /**  Task list item view 
          */
-        public static final int button_done=0x7f05001e;
+        public static final int button_done=0x7f060021;
         /**  Button in confirmation dialog to enable Google Play services.  Clicking it
         will direct user to application settings of Google Play services where they
         can enable it [CHAR LIMIT=30] 
          */
-        public static final int common_google_play_services_enable_button=0x7f050006;
+        public static final int common_google_play_services_enable_button=0x7f060006;
         /**  Message in confirmation dialog informing user they need to enable
         Google Play services in application settings [CHAR LIMIT=NONE] 
          */
-        public static final int common_google_play_services_enable_text=0x7f050005;
+        public static final int common_google_play_services_enable_text=0x7f060005;
         /**  Title of confirmation dialog informing user they need to enable
         Google Play services in application settings [CHAR LIMIT=40] 
          */
-        public static final int common_google_play_services_enable_title=0x7f050004;
+        public static final int common_google_play_services_enable_title=0x7f060004;
         /**  Button in confirmation dialog for installing Google Play services [CHAR LIMIT=30] 
          */
-        public static final int common_google_play_services_install_button=0x7f050003;
+        public static final int common_google_play_services_install_button=0x7f060003;
         /**  (For phones) Message in confirmation dialog informing user that
         they need to install Google Play services (from Play Store) [CHAR LIMIT=NONE] 
          */
-        public static final int common_google_play_services_install_text_phone=0x7f050001;
+        public static final int common_google_play_services_install_text_phone=0x7f060001;
         /**  (For tablets) Message in confirmation dialog informing user that
         they need to install Google Play services (from Play Store) [CHAR LIMIT=NONE] 
          */
-        public static final int common_google_play_services_install_text_tablet=0x7f050002;
+        public static final int common_google_play_services_install_text_tablet=0x7f060002;
         /**  Title of confirmation dialog informing user that they need to install
         Google Play services (from Play Store) [CHAR LIMIT=40] 
          */
-        public static final int common_google_play_services_install_title=0x7f050000;
+        public static final int common_google_play_services_install_title=0x7f060000;
         /**  Message in confirmation dialog informing user there is an unknow issue in Google Player
         services [CHAR LIMIT=NONE] 
          */
-        public static final int common_google_play_services_unknown_issue=0x7f050009;
+        public static final int common_google_play_services_unknown_issue=0x7f060009;
         /**  Button in confirmation dialog for updating Google Play services [CHAR LIMIT=20] 
          */
-        public static final int common_google_play_services_update_button=0x7f05000a;
+        public static final int common_google_play_services_update_button=0x7f06000a;
         /**  Message in confirmation dialog informing user that they need to update
         Google Play services (from Play Store) [CHAR LIMIT=NONE] 
          */
-        public static final int common_google_play_services_update_text=0x7f050008;
+        public static final int common_google_play_services_update_text=0x7f060008;
         /**  Title of confirmation dialog informing user that they need to update
         Google Play services (from Play Store) [CHAR LIMIT=40] 
          */
-        public static final int common_google_play_services_update_title=0x7f050007;
-        public static final int hint_task_description=0x7f050019;
-        public static final int hint_task_reminder_date=0x7f05001c;
-        public static final int hint_task_reminder_location=0x7f05001d;
-        public static final int hint_task_reminder_time=0x7f05001b;
-        public static final int hint_task_reminders_label=0x7f05001a;
-        public static final int hint_task_title=0x7f050018;
-        public static final int menu_item_add_task=0x7f050010;
-        public static final int menu_item_delete_task=0x7f050016;
-        public static final int menu_item_edit_task=0x7f050011;
-        public static final int menu_item_microphone=0x7f05000e;
-        public static final int menu_item_random_task=0x7f050017;
-        public static final int menu_item_save_task=0x7f050015;
-        public static final int menu_item_settings=0x7f050012;
-        public static final int menu_item_task_title=0x7f05000f;
-        public static final int text_view_empty_list=0x7f050013;
+        public static final int common_google_play_services_update_title=0x7f060007;
+        public static final int hello_world=0x7f060022;
+        public static final int hint_task_due_date=0x7f06001d;
+        public static final int hint_task_due_label=0x7f06001c;
+        public static final int hint_task_notes=0x7f06001b;
+        public static final int hint_task_reminder_datetime=0x7f06001f;
+        public static final int hint_task_reminder_location=0x7f060020;
+        public static final int hint_task_reminders_label=0x7f06001e;
+        public static final int hint_task_title=0x7f06001a;
+        public static final int menu_item_accounts=0x7f060013;
+        public static final int menu_item_add_task=0x7f060010;
+        public static final int menu_item_delete_task=0x7f060018;
+        public static final int menu_item_edit_task=0x7f060011;
+        public static final int menu_item_microphone=0x7f06000e;
+        public static final int menu_item_random_task=0x7f060019;
+        public static final int menu_item_refresh=0x7f060012;
+        public static final int menu_item_save_task=0x7f060017;
+        public static final int menu_item_settings=0x7f060014;
+        public static final int menu_item_task_title=0x7f06000f;
+        public static final int menu_settings=0x7f060023;
+        public static final int text_view_empty_list=0x7f060015;
+        /**  Credential activity 
+         */
+        public static final int title_activity_credential=0x7f06000c;
         /**  Task editor activity 
          */
-        public static final int title_activity_task_editor=0x7f050014;
+        public static final int title_activity_task_editor=0x7f060016;
         /**  Task list activity 
          */
-        public static final int title_activity_tasks_list=0x7f05000d;
+        public static final int title_activity_tasks_list=0x7f06000d;
+        public static final int uc_cmd_cancel=0x7f060026;
+        public static final int uc_cmd_ok=0x7f060027;
+        public static final int uc_lbl_password=0x7f060025;
+        /**  User Credencials 
+         */
+        public static final int uc_lbl_username=0x7f060024;
     }
     public static final class style {
-        public static final int AppTheme=0x7f060000;
+        public static final int AppTheme=0x7f070000;
+    }
+    public static final class xml {
+        public static final int syncadapter=0x7f040000;
     }
     public static final class styleable {
         /** Attributes that can be used with a MapAttrs.

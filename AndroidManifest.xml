@@ -1,35 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="il.ac.shenkar.todo"
     android:versionCode="2"
     android:versionName="2.0" >
 
     <uses-sdk
-        android:minSdkVersion="4"
-        android:targetSdkVersion="15" />
-    
-	<uses-permission android:name="android.permission.INTERNET" />
+        android:minSdkVersion="8"
+        android:targetSdkVersion="17" />
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <application
+        android:debuggable="true"
+        android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
         android:uiOptions="splitActionBarWhenNarrow" >
+		
+        <!-- SyncAdapter Service -->
+        <service
+            android:name=".syncadapter.SyncService"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter" />
+        </service>
+        
+        <!-- TasksListActivity Activity -->
         <activity
-            android:name=".controller.activities.TasksListActivity"
+            android:name="il.ac.shenkar.todo.controller.activities.TasksListActivity"
             android:label="@string/title_activity_tasks_list" >
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- CredentialActivity Activity -->
         <activity
-            android:name=".controller.activities.TaskEditorActivity"
+            android:name="il.ac.shenkar.todo.controller.activities.CredentialActivity"
+            android:label="@string/title_activity_credential"
+            android:exported="false" > 
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="il.ac.shenkar.todo.controller.activities.TasksListActivity" />
+            <intent-filter>
+                <action android:name="il.ac.shenkar.todo.ACTION_SELECT_ACCOUNT" />
+            </intent-filter>
+        </activity>
+        
+        <!-- TaskEditorActivity Activity -->
+        <activity
+            android:name="il.ac.shenkar.todo.controller.activities.TaskEditorActivity"
+            android:exported="false"
             android:label="@string/title_activity_task_editor"
-            android:parentActivityName="il.ac.shenkar.todo.controller.activities.TasksListActivity"
-            android:exported="false" >
+            android:parentActivityName="il.ac.shenkar.todo.controller.activities.TasksListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="il.ac.shenkar.todo.controller.activities.TasksListActivity" />
@@ -38,22 +76,37 @@
                 <action android:name="il.ac.shenkar.todo.ACTION_EDIT_NEW_TASK" />
             </intent-filter>
         </activity>
-		<provider
-		    android:name="il.ac.shenkar.todo.model.contentproviders.TasksProvider"
-			android:authorities="il.ac.shenkar.todo.contentprovider"
-			android:exported="false">
-			<grant-uri-permission android:pathPattern=".*" />
-		</provider>
-		<receiver
-		    android:name=".controller.broadcastreceivers.DateTimeReminderBroadcastReceiver"
-			android:exported="false" >
-			<intent-filter>
-			    <action android:name="il.ac.shenkar.todo.ACTION_DATETIME_REMINDER_BROADCAST" />
-			</intent-filter>
-		</receiver>
-		<service
-		    android:name=".controller.services.AddTaskService">
-		</service>
+
+        <!-- TasksProvider ContentProvider -->
+        <provider
+            android:name="il.ac.shenkar.todo.model.contentproviders.TasksProvider"
+            android:authorities="il.ac.shenkar.todo.contentproviders.TasksProvider"
+            android:enabled="true" >
+            <grant-uri-permission android:pathPattern=".*" />
+        </provider>
+
+        <!-- DateTimeReminderBroadcastReciver BroadcastReciver -->
+        <receiver
+            android:name="il.ac.shenkar.todo.controller.broadcastreceivers.DateTimeReminderBroadcastReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="il.ac.shenkar.todo.ACTION_DATETIME_REMINDER_BROADCAST" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- LocationReminderBroadcastReciver BroadcastReciver -->
+        <receiver
+            android:name="il.ac.shenkar.todo.controller.broadcastreceivers.LocationReminderBroadcastReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="il.ac.shenkar.todo.ACTION_LOCATION_REMINDER_BROADCAST" />
+            </intent-filter>
+        </receiver>
+
+        <!-- AddTaskService Service -->
+        <service android:name="il.ac.shenkar.todo.controller.services.AddTaskService" >
+        </service>
+        
     </application>
 
 </manifest>

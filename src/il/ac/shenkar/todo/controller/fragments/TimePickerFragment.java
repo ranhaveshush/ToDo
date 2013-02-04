@@ -37,10 +37,11 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
 		 * When time picked set this is the event callback function
 		 * to notify the parent activity.
 		 * 
-		 * @param hourOfDay
-		 * @param minute
+		 * @param fragmentTag	String represents the fragment tag
+		 * @param hourOfDay		Integer represents the hour
+		 * @param minute		Integer represents the minute
 		 */
-		public void onTimePicked(int hourOfDay, int minute);
+		public void onTimePicked(String fragmentTag, int hourOfDay, int minute);
 	}
 	
 	/**
@@ -70,7 +71,7 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
 	// FIXME: Why this method invoked twice
 	public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
 		Log.d(TAG, "Time picked: " + hourOfDay + ":" + minute); 
-		listener.onTimePicked(hourOfDay, minute);
+		listener.onTimePicked(getTag(), hourOfDay, minute);
 	}
 
 	/* (non-Javadoc)036996

@@ -70,12 +70,11 @@ public class TasksProvider extends ContentProvider {
 
 		// Add a pattern that routes URIs terminated with "tasks" to a TASKS
 		// operation
-		uriMatcher.addURI(ToDo.AUTHORITY, "tasks", TASKS);
+		uriMatcher.addURI(ToDo.Tasks.AUTHORITY, "tasks", TASKS);
 
 		// Add a pattern that routes URIs terminated with "tasks" plus an
-		// integer
-		// to a task ID operation
-		uriMatcher.addURI(ToDo.AUTHORITY, "tasks/#", TASK_ID);
+		// integer to a task ID operation
+		uriMatcher.addURI(ToDo.Tasks.AUTHORITY, "tasks/#", TASK_ID);
 
 		/*
 		 * Creates and initializes a projection map that returns all columns.
@@ -84,21 +83,25 @@ public class TasksProvider extends ContentProvider {
 		// Creates a new projection map instance. The map returns a column name
 		// given a string. The two are usually equal.
 		tasksProjectionMap = new HashMap<String, String>();
-
-		// Maps the string "_ID" to the column name "_ID"
-		tasksProjectionMap.put(ToDo.Tasks._ID, ToDo.Tasks._ID);
 		
-		// Maps the string "title" to the column name "title"
-		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_TITLE,
-				ToDo.Tasks.COLUMN_NAME_TITLE);
-
-		// Maps the string "description" to the column name "decription"
-		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_DESCRIPTION,
-				ToDo.Tasks.COLUMN_NAME_DESCRIPTION);
-		
-		// Maps the string "datetime" to the column name "datetime"
-		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_DATETIME,
-				ToDo.Tasks.COLUMN_NAME_DATETIME);
+		// Maps all tasks table columns
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_CLIENT_ID, ToDo.Tasks.COLUMN_NAME_CLIENT_ID);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_KIND, ToDo.Tasks.COLUMN_NAME_KIND);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_SERVER_ID, ToDo.Tasks.COLUMN_NAME_SERVER_ID);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_TITLE, ToDo.Tasks.COLUMN_NAME_TITLE);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_UPDATED, ToDo.Tasks.COLUMN_NAME_UPDATED);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_SELF_LINK, ToDo.Tasks.COLUMN_NAME_SELF_LINK);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_PARENT, ToDo.Tasks.COLUMN_NAME_PARENT);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_POSITION, ToDo.Tasks.COLUMN_NAME_POSITION);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_NOTES, ToDo.Tasks.COLUMN_NAME_NOTES);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_STATUS, ToDo.Tasks.COLUMN_NAME_STATUS);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_DUE, ToDo.Tasks.COLUMN_NAME_DUE);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_COMPLETED, ToDo.Tasks.COLUMN_NAME_COMPLETED);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_DELETED, ToDo.Tasks.COLUMN_NAME_DELETED);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_HIDDEN, ToDo.Tasks.COLUMN_NAME_HIDDEN);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_TASKLIST_ID, ToDo.Tasks.COLUMN_NAME_TASKLIST_ID);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER, ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER);
+		tasksProjectionMap.put(ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER, ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER);
 	}
 
 	/**
@@ -106,6 +109,10 @@ public class TasksProvider extends ContentProvider {
 	 */
 	private DatabaseHelper databaseHelper = null;
 
+	/**
+	 * @author ran
+	 *
+	 */
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
 		/**
@@ -116,17 +123,30 @@ public class TasksProvider extends ContentProvider {
 		/**
 		 * The database version.
 		 */
-		public static final int DATABASE_VERSION = 5;
+		public static final int DATABASE_VERSION = 33;
 		
 		/**
 		 * Creates table tasks SQL.
 		 */
-		private static final String CREATE_TABLE_TASKS = 
+		private static final String CREATE_TABLE_TASKS =
 				"CREATE TABLE " + ToDo.Tasks.TABLE_NAME_TASKS + "("
-				+ ToDo.Tasks._ID + " INTEGER PRIMARY KEY NOT NULL,"
-				+ ToDo.Tasks.COLUMN_NAME_TITLE + " TEXT NOT NULL,"
-				+ ToDo.Tasks.COLUMN_NAME_DESCRIPTION + " TEXT,"
-				+ ToDo.Tasks.COLUMN_NAME_DATETIME + " REAL);";
+				+ ToDo.Tasks.COLUMN_NAME_CLIENT_ID + " INTEGER PRIMARY KEY NOT NULL, "
+				+ ToDo.Tasks.COLUMN_NAME_KIND + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_SERVER_ID + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_TITLE + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_UPDATED + " TEXT NOT NULL, "
+				+ ToDo.Tasks.COLUMN_NAME_SELF_LINK + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_PARENT + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_POSITION + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_NOTES + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_STATUS + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_DUE + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_COMPLETED + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_DELETED + " INTEGER, "
+				+ ToDo.Tasks.COLUMN_NAME_HIDDEN + " INTEGER, "
+				+ ToDo.Tasks.COLUMN_NAME_TASKLIST_ID + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER + " TEXT, "
+				+ ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER + " TEXT);";
 		
 		/**
 		 * Drops table tasks SQL.
@@ -182,39 +202,18 @@ public class TasksProvider extends ContentProvider {
 	 * @see android.content.ContentProvider#query(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String)
 	 */
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder) {
-		// Constructs a new query builder and sets its table name
-		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		qb.setTables(ToDo.Tasks.TABLE_NAME_TASKS);
-
-		/**
-		 * Choose the projection and adjust the "where" clause based on URI
-		 * pattern-matching.
-		 */
-		switch (uriMatcher.match(uri)) {
-		// If the incoming URI is for tasks, chooses the Tasks projection
-		case TASKS:
-			qb.setProjectionMap(tasksProjectionMap);
-			break;
-		/*
-		 * If the incoming URI is for a single task identified by its ID,
-		 * chooses the task ID projection, and appends "_ID = <taskID>" to the
-		 * where clause, so that it selects that single task
-		 */
-		case TASK_ID:
-			qb.setProjectionMap(tasksProjectionMap);
-			qb.appendWhere(
-					ToDo.Tasks._ID
-					+ "="
-					+ uri.getPathSegments().get(
-							ToDo.Tasks.TASK_ID_PATH_POSITION));
-			break;
-		default:
-			// If the URI doesn't match any of the known patterns, throw an
-			// exception.
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+		Log.d(TAG, "query(" + uri + ",...");
+		
+		// Validates the incoming URI pattern
+		if (uriMatcher.match(uri) != TASKS) {
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
+		
+		// Constructs a new query builder and sets its table name and projection
+		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		qb.setTables(ToDo.Tasks.TABLE_NAME_TASKS);
+		qb.setProjectionMap(tasksProjectionMap);
 
 		String orderBy;
 		// If no sort order is specified, uses the default
@@ -225,7 +224,7 @@ public class TasksProvider extends ContentProvider {
 			orderBy = sortOrder;
 		}
 
-		// Opens the database object in "read" mode, 
+		// Opens the database object in "read" mode,
 		// since no writes need to be done.
 		SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
@@ -280,26 +279,16 @@ public class TasksProvider extends ContentProvider {
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
-		ContentValues finalValues = null;
-
-		if (initialValues != null) {
-			finalValues = initialValues;
-		} else {
-			finalValues = new ContentValues();
-		}
-
-		// If column title is null then insert default content for that column,
-		// because it can not be null.
-		if (finalValues.containsKey(ToDo.Tasks.COLUMN_NAME_TITLE) == false) {
-			finalValues.put(ToDo.Tasks.COLUMN_NAME_TITLE,
-					ToDo.Tasks.COLUMN_DEFAULT_CONTENT_TITLE);
+		// Validates the content values
+		if (initialValues == null) {
+			return null;
 		}
 
 		// Opens the database object in "read/write" mode, 
 		// since writes need to be done.
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
 
-		long insertedRowId = db.insert(ToDo.Tasks.TABLE_NAME_TASKS, null, finalValues);
+		long insertedRowId = db.insert(ToDo.Tasks.TABLE_NAME_TASKS, null, initialValues);
 
 		// If insert failed, throw exception
 		if (insertedRowId == -1) {
@@ -330,7 +319,7 @@ public class TasksProvider extends ContentProvider {
 			finalWhereClause = initialWhereClause;
 			break;
 		case TASK_ID:
-			finalWhereClause = ToDo.Tasks._ID + "=" + ContentUris.parseId(uri);
+			finalWhereClause = ToDo.Tasks.COLUMN_NAME_CLIENT_ID + "=" + ContentUris.parseId(uri);
 			if (initialWhereClause != null) {
 				finalWhereClause = finalWhereClause + " AND " + initialWhereClause;
 			}
@@ -342,8 +331,6 @@ public class TasksProvider extends ContentProvider {
 		// Opens the database object in "read/write" mode, 
 		// since writes need to be done.
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
-		
-		Log.d(TAG, "finalWhereClause: " + finalWhereClause);
 
 		int numOfRowsAffected = db.delete(ToDo.Tasks.TABLE_NAME_TASKS, finalWhereClause, whereArgs);
 
@@ -367,7 +354,7 @@ public class TasksProvider extends ContentProvider {
 			finalWhereClause = initialWhereClause;
 			break;
 		case TASK_ID:
-			finalWhereClause = ToDo.Tasks._ID + "=" + ContentUris.parseId(uri);
+			finalWhereClause = ToDo.Tasks.COLUMN_NAME_CLIENT_ID + "=" + ContentUris.parseId(uri);
 			if (initialWhereClause != null) {
 				finalWhereClause = finalWhereClause + " AND " + initialWhereClause;
 			}
@@ -379,8 +366,6 @@ public class TasksProvider extends ContentProvider {
 		// Opens the database object in "read/write" mode, 
 		// since writes need to be done.
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
-		
-		Log.d(TAG, "finalWhereClause: " + finalWhereClause);
 		
 		int numOfRowsAffected = db.update(ToDo.Tasks.TABLE_NAME_TASKS, values, finalWhereClause, whereArgs);
 		

@@ -37,11 +37,12 @@ public class DatePickerFragment extends DialogFragment implements OnDateSetListe
 		 * When date picked set this is the event callback function
 		 * to notify the parent activity.
 		 * 
-		 * @param year
-		 * @param monthOfYear
-		 * @param dayOfMonth
+		 * @param fragmentTag	String represents the fragment's tag
+		 * @param year			Integer represents the year
+		 * @param monthOfYear	Integer represents the month
+		 * @param dayOfMonth	Integer represents the day
 		 */
-		public void onDatePicked(int year, int monthOfYear, int dayOfMonth);
+		public void onDatePicked(String fragmentTag, int year, int monthOfYear, int dayOfMonth);
 	}
 	
 	/**
@@ -72,7 +73,7 @@ public class DatePickerFragment extends DialogFragment implements OnDateSetListe
 	public void onDateSet(DatePicker view, int year, int monthOfYear,
 			int dayOfMonth) {
 		Log.d(TAG, "Date picked: " + year + "/" + monthOfYear + "/" + dayOfMonth);
-		listener.onDatePicked(year, monthOfYear, dayOfMonth);
+		listener.onDatePicked(getTag(), year, monthOfYear, dayOfMonth);
 	}
 
 	/* (non-Javadoc)
