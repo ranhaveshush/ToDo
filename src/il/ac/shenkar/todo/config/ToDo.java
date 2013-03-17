@@ -21,23 +21,6 @@ public final class ToDo {
 	public static final String PACKAGE = "il.ac.shenkar.todo";
 	
 	/**
-	 * Authentication.
-	 * 
-	 * @author ran
-	 *
-	 */
-	public static final class Auth {
-		
-		// This class cannot be instantiated
-		private Auth() {}
-		
-		public static final String AUTHTOKEN_TYPE = PACKAGE + ".authtoken";
-		public static final String ACCOUNT_NAME = PACKAGE + ".account";
-		public static final String ACCOUNT_TYPE = PACKAGE + ".account";
-		
-	}
-	
-	/**
 	 * Tasks table contract.
 	 * 
 	 * @author ran
@@ -67,20 +50,16 @@ public final class ToDo {
          */
 		
 		/**
+		 * UNKNOWN FIELD:
+		 * 
 		 * Column name task's id on the client (sqlite local database).
 		 * Task identifier.
 		 * 
 		 * <P>Type: INTEGER</P>
+		 * <P>Constraint: NOT NULL</p>
+		 * <P>Constraint: PRIMARY KEY</p> 
 		 */
 		public static final String COLUMN_NAME_CLIENT_ID = "_id";
-		
-		/**
-         * Column name task's kind.
-         * Type of the resource. This is always "tasks#task".
-         * 
-         * <P>Type: TEXT</P>
-         */
-		public static final String COLUMN_NAME_KIND = "kind";
 		
 		/**
 		 * Column name task's id on the server.
@@ -90,6 +69,14 @@ public final class ToDo {
 		 */
 		public static final String COLUMN_NAME_SERVER_ID = "id";
 		
+		/**
+         * Column name task's kind.
+         * Type of the resource. This is always "tasks#task".
+         * 
+         * <P>Type: TEXT</P>
+         */
+		public static final String COLUMN_NAME_KIND = "kind";
+		
 		// etag is ommited - ETag of the resource.
 		
 		/**
@@ -97,6 +84,7 @@ public final class ToDo {
          * Title of the task.
          * 
          * <P>Type: TEXT</P>
+         * <P>Constraint: NOT NULL</p>
          */
 		public static final String COLUMN_NAME_TITLE = "title";
 		
@@ -128,6 +116,17 @@ public final class ToDo {
          * <P>Type: TEXT</P>
          */
 		public static final String COLUMN_NAME_PARENT = "parent";
+		
+		/**
+		 * UNKNOWN FIELD:
+		 * 
+		 * Column name task's previos.
+		 * The previous task client id.
+		 * Needed for the move method of Google Tasks API.
+		 * 
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String COLUMN_NAME_PREVIOUS = "previous";
 		
 		/**
          * Column name task's position.
@@ -175,10 +174,21 @@ public final class ToDo {
 		public static final String COLUMN_NAME_COMPLETED = "completed";
 		
 		/**
+		 * UNKNOWN FIELD:
+		 * 
+		 * Column name task's moved.
+		 * Flag indicating whether the task was moved.
+		 * True as 1 and false as 0.
+		 * 
+		 * <P>Type: INTEGER</P>
+		 */
+		public static final String COLUMN_NAME_MOVED = "moved";
+		
+		/**
          * Column name task's deleted.
          * Flag indicating whether the task has been deleted.
          * The default if False.
-         * true as 1 and false as 0.
+         * True as 1 and false as 0.
          * 
          * <P>Type: INTEGER</P>
          */
@@ -189,23 +199,29 @@ public final class ToDo {
          * Flag indicating whether the task is hidden.
          * This is the case if the task had been marked completed when the task list was last cleared.
          * The default is False. This field is read-only.
-         * true as 1 and false as 0.
+         * True as 1 and false as 0.
          * 
          * <P>Type: INTEGER</P>
          */
 		public static final String COLUMN_NAME_HIDDEN = "hidden";
 		
-		// Links is ommited - Collection of links. This collection is read-only.
+		// Links are ommited - Collection of links. This collection is read-only.
 		
 		/**
-		 * Column name task's task list id.
-		 * TaskList identifier.
+ 		 * UNKNOWN FIELD:
 		 * 
-		 * <P>Type: TEXT</P>
+		 * Column name task's task list client id.
+		 * TaskList client identifier.
+		 * 
+		 * <P>Type: INTEGER</P>
+		 * <P>Constraint: NOT NULL</p>
+		 * <P>Constraint: FOREIGN KEY</p>
 		 */
-		public static final String COLUMN_NAME_TASKLIST_ID = "taskListId";
+		public static final String COLUMN_NAME_TASK_LIST_CLIENT_ID = "taskListClientId";
 		
 		/**
+		 * UNKNOWN FIELD:
+		 * 
 		 * Column name task's datetime reminder.
 		 * Datetime reminder of the task (as a RFC 3339 timestamp).
 		 * 
@@ -214,6 +230,8 @@ public final class ToDo {
 		public static final String COLUMN_NAME_DATETIME_REMINDER = "datetime_reminder";
 		
 		/**
+		 * UNKNOWN FIELD:
+		 * 
 		 * Column name task's location reminder (Address).
 		 * 
 		 * <P>Type: TEXT</P>
@@ -237,25 +255,40 @@ public final class ToDo {
 		 * <P>Type: INTEGER</P>
 		 */
 		public static final int COLUMN_VALUE_TRUE = 1;
+		
+		/**
+		 * Column value for the status column task that needs action.
+		 * 
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String COLUMN_STATUS_NEEDS_ACTION = "needsAction";
+		
+		/**
+		 * Column value for the status column task that completed.
+		 * 
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String COLUMN_STATUS_COMPLETED = "completed";
         
         /*
          * Column positions.
          */
         
         /**
-         * Column position for task's id.
+         * UNKNOWN FIELD:
+         * Column position for task's client id.
          */
         public static final int COLUMN_POSITION_CLIENT_ID = 0;
         
         /**
-         * Column position for task's kind.
-         */
-		public static final int COLUMN_POSITION_KIND = 1;
-		
-		/**
          * Column position for task's id on the server.
          */
-		public static final int COLUMN_POSITION_SERVER_ID = 2;
+        public static final int COLUMN_POSITION_SERVER_ID = 1;
+        
+        /**
+         * Column position for task's kind.
+         */
+		public static final int COLUMN_POSITION_KIND = 2;
 		
 		// etag is ommited - ETag of the resource.
 		
@@ -280,54 +313,69 @@ public final class ToDo {
 		public static final int COLUMN_POSITION_PARENT = 6;
 		
 		/**
+		 * UNKNOWN FIELD:
+		 * Column position for task's previous.
+		 */
+		public static final int COLUMN_POSITION_PREVIOUS = 7;
+		
+		/**
          * Column position for task's position.
          */
-		public static final int COLUMN_POSITION_POSITION = 7;
+		public static final int COLUMN_POSITION_POSITION = 8;
 		
 		/**
          * Column position for task's notes.
          */
-		public static final int COLUMN_POSITION_NOTES = 8;
+		public static final int COLUMN_POSITION_NOTES = 9;
 		
 		/**
          * Column position for task's status.
          */
-		public static final int COLUMN_POSITION_STATUS = 9;
+		public static final int COLUMN_POSITION_STATUS = 10;
 		
 		/**
          * Column position for task's due.
          */
-		public static final int COLUMN_POSITION_DUE = 10;
+		public static final int COLUMN_POSITION_DUE = 11;
 		
 		/**
          * Column position for task's completed.
          */
-		public static final int COLUMN_POSITION_COMPLETED = 11;
+		public static final int COLUMN_POSITION_COMPLETED = 12;
+		
+		/**
+		 * UNKNOWN FIELD:
+		 * Column position for task's moved.
+		 */
+		public static final int COLUMN_POSITION_MOVED = 13;
 		
 		/**
          * Column position for task's deleted.
          */
-		public static final int COLUMN_POSITION_DELETED = 12;
+		public static final int COLUMN_POSITION_DELETED = 14;
 		
 		/**
          * Column position for task's hidden.
          */
-		public static final int COLUMN_POSITION_HIDDEN = 13;
+		public static final int COLUMN_POSITION_HIDDEN = 15;
 		
 		/**
-		 * Column position for task's task list id.
+		 * UNKNOWN FIELD:
+		 * Column position for task's task list client id.
 		 */
-		public static final int COLUMN_POSITION_TASKLIST_ID = 14;
+		public static final int COLUMN_POSITION_TASK_LIST_CLIENT_ID = 16;
 		
 		/**
+		 * UNKNOWN FIELD:
 		 * Column position for task's datetime reminder.
 		 */
-		public static final int CLOUMN_POSITION_DATETIME_REMINDER = 15;
+		public static final int COLUMN_POSITION_DATETIME_REMINDER = 17;
 		
 		/**
+		 * UNKNOWN FIELD:
 		 * Column position for task's location reminder.
 		 */
-		public static final int CLOUMN_POSITION_LOCATION_REMINDER = 16;
+		public static final int COLUMN_POSITION_LOCATION_REMINDER = 18;
         
         /*
          * Column defaults content.
@@ -423,22 +471,275 @@ public final class ToDo {
         public static final String[] PROJECTION =
             new String[] {
                 ToDo.Tasks.COLUMN_NAME_CLIENT_ID,
-                ToDo.Tasks.COLUMN_NAME_KIND,
                 ToDo.Tasks.COLUMN_NAME_SERVER_ID,
+                ToDo.Tasks.COLUMN_NAME_KIND,
                 ToDo.Tasks.COLUMN_NAME_TITLE,
                 ToDo.Tasks.COLUMN_NAME_UPDATED,
                 ToDo.Tasks.COLUMN_NAME_SELF_LINK,
                 ToDo.Tasks.COLUMN_NAME_PARENT,
+                ToDo.Tasks.COLUMN_NAME_PREVIOUS,
                 ToDo.Tasks.COLUMN_NAME_POSITION,
                 ToDo.Tasks.COLUMN_NAME_NOTES,
                 ToDo.Tasks.COLUMN_NAME_STATUS,
                 ToDo.Tasks.COLUMN_NAME_DUE,
                 ToDo.Tasks.COLUMN_NAME_COMPLETED,
+                ToDo.Tasks.COLUMN_NAME_MOVED,
                 ToDo.Tasks.COLUMN_NAME_DELETED,
                 ToDo.Tasks.COLUMN_NAME_HIDDEN,
-                ToDo.Tasks.COLUMN_NAME_TASKLIST_ID,
+                ToDo.Tasks.COLUMN_NAME_TASK_LIST_CLIENT_ID,
                 ToDo.Tasks.COLUMN_NAME_DATETIME_REMINDER,
                 ToDo.Tasks.COLUMN_NAME_LOCATION_REMINDER
+        };
+		
+	}
+	
+	/**
+	 * TaskLists table contract.
+	 * 
+	 * @author ran
+	 */
+	public static final class TaskLists implements BaseColumns {
+		
+		// This class cannot be instantiated
+		private TaskLists() {}
+		
+		/**
+		 * The authority.
+		 */
+		public static final String AUTHORITY = "il.ac.shenkar.todo.contentproviders.TasksProvider";
+		
+		/**
+		 * The table name offered by this provider.
+		 */
+		public static final String TABLE_NAME_TASK_LISTS = "task_lists";
+		
+		/*
+         * Column definitions.
+         * 
+         * Taken from the Google Tasks API URL:
+         * https://developers.google.com/google-apps/tasks/v1/reference/tasks
+         * 
+         * For reference on the column names and description.
+         */
+		
+		/**
+		 * UNKNOWN FIELD:
+		 * 
+		 * Column name task list's id on the client (sqlite local database).
+		 * TaskList identifier.
+		 * 
+		 * <P>Type: INTEGER</P>
+		 * <P>Constraint: NOT NULL</p>
+		 * <P>Constraint: PRIMARY KEY</p>
+		 */
+		public static final String COLUMN_NAME_CLIENT_ID = "_id";
+		
+		/**
+		 * Column name task list's id on the server.
+		 * TaskList identifier.
+		 * 
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String COLUMN_NAME_SERVER_ID = "id";
+		
+		/**
+         * Column name task list's kind.
+         * Type of the resource. This is always "tasks#taskList".
+         * 
+         * <P>Type: TEXT</P>
+         */
+		public static final String COLUMN_NAME_KIND = "kind";
+		
+		// etag is ommited - ETag of the resource.
+		
+		/**
+         * Column name task list's title.
+         * Title of the task list.
+         * 
+         * <P>Type: TEXT</P>
+         * <P>Constraint: NOT NULL</p>
+         */
+		public static final String COLUMN_NAME_TITLE = "title";
+		
+		/**
+         * Column name task list's updated.
+         * Last modification time of the task list (as a RFC 3339 timestamp).
+         * 
+         * <P>Type: TEXT</P>
+         * <P>Constraint: NOT NULL</p>
+         */
+		public static final String COLUMN_NAME_UPDATED = "updated";
+        
+		/**
+         * Column name task list's selfLink.
+         * URL pointing to this task list.
+         * Used to retrieve, update, or delete this task list.
+         * 
+         * <P>Type: TEXT</P>
+         */
+		public static final String COLUMN_NAME_SELF_LINK = "selfLink";
+		
+		/**
+		 * UNKNOWN FIELD:
+		 * 
+         * Column name task's deleted.
+         * Flag indicating whether the task has been deleted.
+         * The default if False.
+         * True as 1 and false as 0.
+         * 
+         * <P>Type: INTEGER</P>
+         */
+		public static final String COLUMN_NAME_DELETED = "deleted";
+		
+		/*
+		 * Column values.
+		 */
+		
+		/**
+		 * Column value false as integer 0.
+		 * 
+		 * <P>Type: INTEGER</P>
+		 */
+		public static final int COLUMN_VALUE_FALSE = 0;
+		
+		/**
+		 * Column value true as integer 1.
+		 * 
+		 * <P>Type: INTEGER</P>
+		 */
+		public static final int COLUMN_VALUE_TRUE = 1;
+        
+        /*
+         * Column positions.
+         */
+        
+        /**
+         * UNKNOWN FIELD:
+         * Column position for task list's client id.
+         */
+        public static final int COLUMN_POSITION_CLIENT_ID = 0;
+        
+        /**
+         * Column position for task list's id on the server.
+         */
+        public static final int COLUMN_POSITION_SERVER_ID = 1;
+        
+        /**
+         * Column position for task list's kind.
+         */
+		public static final int COLUMN_POSITION_KIND = 2;
+		
+		// etag is ommited - ETag of the resource.
+		
+		/**
+         * Column position for task list's title.
+         */
+		public static final int COLUMN_POSITION_TITLE = 3;
+		
+		/**
+         * Column position for task list's updated.
+         */
+		public static final int COLUMN_POSITION_UPDATED = 4;
+        
+		/**
+         * Column position for task list's selfLink.
+         */
+		public static final int COLUMN_POSITION_SELF_LINK = 5;
+		
+		/**
+         * Column position for task list's deleted.
+         */
+		public static final int COLUMN_POSITION_DELETED = 6;
+        
+        /*
+         * Column defaults content.
+         */
+		
+		/*
+		 * URI definitions.
+		 */
+		
+		/**
+		 * The scheme part for this provider's URI.
+		 */
+		public static final String SCHEME = "content://";
+		
+		/*
+		 * Path parts for the URIs.
+		 */
+		
+		/**
+		 * Path part for the task lists URI.
+		 */
+		public static final String PATH_TASK_LISTS = "/tasklists";
+		
+		/**
+		 * Path part for the task list ID URI.
+		 */
+		public static final String PATH_TASK_LIST_ID = "/tasklists/";
+		
+		/**
+         * 0-relative position of a task list ID segment in the path part of a TaskList ID URI.
+         */
+        public static final int TASK_LIST_ID_PATH_POSITION = 1;
+		
+		/**
+		 * The content:// style URL for this table.
+		 */
+		public static final Uri CONTENT_URI = Uri.parse(SCHEME + AUTHORITY + PATH_TASK_LISTS);
+		
+		/**
+		 * The content URI base for a single task list. Callers must
+         * append a numeric task list id to this Uri to retrieve a task list.
+		 */
+		public static final Uri CONTENT_ID_URI_BASE = Uri.parse(SCHEME + AUTHORITY + PATH_TASK_LIST_ID);
+		
+		/**
+		 * The content URI match pattern for a single task list, specified by its ID. Use this to match
+         * incoming URIs or to construct an Intent.
+		 */
+		public static final Uri CONTENT_ID_URI_PATTERN = Uri.parse(SCHEME + AUTHORITY + PATH_TASK_LIST_ID + "/#");
+		
+		/*
+         * MIME type definitions.
+         */
+		
+        /**
+         * The MIME type of {@link #CONTENT_URI} providing a directory of task lists.
+         */
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/List<com.google.api.services.tasks.model.TaskList>";
+
+        /**
+         * The MIME type of a {@link #CONTENT_URI} sub-directory of a single task list.
+         */
+        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/com.google.api.services.tasks.model.TaskList";
+        
+        /*
+         * Sort Order definitions.
+         */
+        
+        /**
+         * Order by task list's title.
+         */
+        public static final String SORT_BY_TITLE = COLUMN_NAME_TITLE + " ASC";
+
+        /**
+         * The default sort order for this table.
+         */
+        public static final String DEFAULT_SORT_ORDER = SORT_BY_TITLE;
+        
+        /*
+         * Creates a projection that returns the task ID and the task contents.
+         */
+        public static final String[] PROJECTION =
+            new String[] {
+                ToDo.TaskLists.COLUMN_NAME_CLIENT_ID,
+                ToDo.TaskLists.COLUMN_NAME_SERVER_ID,
+                ToDo.TaskLists.COLUMN_NAME_KIND,
+                ToDo.TaskLists.COLUMN_NAME_TITLE,
+                ToDo.TaskLists.COLUMN_NAME_UPDATED,
+                ToDo.TaskLists.COLUMN_NAME_SELF_LINK,
+                ToDo.TaskLists.COLUMN_NAME_DELETED
         };
 		
 	}
@@ -487,15 +788,8 @@ public final class ToDo {
 		 */
 		public static final String ACTION_SELECT_ACCOUNT = "il.ac.shenkar.todo.ACTION_SELECT_ACCOUNT";
 		
-		/**
-		 * Action to edit existing task.
-		 */
-		public static final String ACTION_EDIT_EXISTING_TASK = "il.ac.shenkar.todo.ACTION_EDIT_EXISTING_TASK";
-		
-		/**
-		 * Action to edit new task.
-		 */
-		public static final String ACTION_EDIT_NEW_TASK = "il.ac.shenkar.todo.ACTION_EDIT_NEW_TASK";
+		public static final String ACTION_VIEW_TASK = "il.ac.shenkar.todo.ACTION_VIEW_TASK";
+		public static final String ACTION_EDIT_TASK = "il.ac.shenkar.todo.ACTION_EDIT_TASK";
 		
 		/**
 		 * Action to get a datetime reminder broadcast.
@@ -521,16 +815,16 @@ public final class ToDo {
 		private Extras() {}
 		
 		/**
-		 * Extra key for task's id.
-		 * <P>Type: String</P>
+		 * Extra key for task's client id.
+		 * <P>Type: long</P>
 		 */
-		public static final String EXTRA_TASK_ID = "il.ac.shenkar.todo.EXTRA_TASK_ID";
+		public static final String EXTRA_TASK_CLIENT_ID = "il.ac.shenkar.todo.EXTRA_TASK_CLIENT_ID";
 		
 		/**
-		 * Extra key for task list id.
-		 * <P>Type: String</P>
+		 * Extra key for task list client id.
+		 * <P>Type: long</P>
 		 */
-		public static final String EXTRA_TASK_LIST_ID = "il.ac.shenkar.todo.EXTRA_TASK_LIST_ID";
+		public static final String EXTRA_TASK_LIST_CLIENT_ID = "il.ac.shenkar.todo.EXTRA_TASK_LIST_CLIENT_ID";
 		
 		/**
 		 * Extra key for task's title.
@@ -539,16 +833,10 @@ public final class ToDo {
 		public static final String EXTRA_TASK_TITLE = "il.ac.shenkar.todo.EXTRA_TASK_TITLE";
 		
 		/**
-		 * Extra key for task's description.
+		 * Extra key for task's notes.
 		 * <P>Type: String</P>
 		 */
-		public static final String EXTRA_TASK_DESCRIPTION = "il.ac.shenkar.todo.EXTRA_TASK_DESCRIPTION";
-		
-		/**
-		 * Extra key for task's datetime in milliseconds from 1.1.1970.
-		 * <P>Type: long</P>
-		 */
-		public static final String EXTRA_TASK_DATETIME_MILLISEC = "il.ac.shenkar.todo.EXTRA_TASK_DATETIME_MILLISEC";
+		public static final String EXTRA_TASK_NOTES = "il.ac.shenkar.todo.EXTRA_TASK_NOTES";
 		
 		/**
 		 * Extra key for reminder's id.
@@ -556,10 +844,23 @@ public final class ToDo {
 		 */
 		public static final String EXTRA_REMINDER_ID = "il.ac.shenkar.todo.EXTRA_REMINDER_ID";
 		
+		/**
+		 * Extra key for task's location reminder address.
+		 * <P>Type: String</P>
+		 */
+		public static final String EXTRA_TASK_LOCATION_REMINDER_ADDRESS = "il.ac.shenkar.todo.EXTRA_TASK_LOCATION_REMINDER_ADDRESS";
+		
+		/**
+		 * Extra key for indicating if the geo-fancing notification fires when
+		 * Entering the proximity (true) or exiting the proximity (false).
+		 * <P>Type: boolean</P>
+		 */
+		public static final String EXTRA_IS_PROXIMITY_ENTERING = "il.ac.shenkar.todo.EXTRA_IS_PROXIMITY_ENTERING";
+		
 	}
 	
 	/**
-	 * DialogFragment Arguments contract.
+	 * Fragment Arguments contract.
 	 * 
 	 * @author ran
 	 *
@@ -576,10 +877,10 @@ public final class ToDo {
 		public static final String ARG_ACCOUNT_PICKER_DIALOG_TITLE = "il.ac.shenkar.todo.ARG_ACCOUT_PICKER_DIALOG_TITLE";
 		
 		/**
-		 * Argument key for the tasks list identifier.
+		 * Argument key for the list client identifier.
 		 * <P>Type: String</P>
 		 */
-		public static final String ARG_TASKS_LIST_ID = "il.ac.shenkar.todo.ARG_TASKS_LIST_ID";
+		public static final String ARG_TASK_LIST_CLIENT_ID = "il.ac.shenkar.todo.ARG_TASK_LIST_CLIENT_ID";
 	}
 	
 	/**

@@ -1,0 +1,82 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dslv="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="@dimen/padding"
+    android:paddingLeft="@dimen/padding"
+    android:paddingRight="@dimen/padding" >
+    
+    <TextView
+        android:id="@+id/text_view_title_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/title_account" />
+    
+    <View
+	    android:layout_width="match_parent"
+	    android:layout_height="@dimen/hr_height"
+	    android:layout_below="@id/text_view_title_account"
+	    android:background="@color/grey" />
+    
+    <!-- Change when support for multi account -->
+    <TextView
+        android:id="@+id/text_view_account_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_view_title_account"
+        android:layout_marginTop="10dp"
+        android:text="ran.haveshush.shenkar@gmail.com" />
+    
+    <ImageView
+	    android:id="@+id/image_view_add_task_list"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/text_view_account_name"
+	    android:layout_marginTop="10dp"
+	    android:src="@drawable/ic_action_add_task_list" />
+	
+	<EditText
+	    android:id="@+id/edit_text_task_list_title"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_toRightOf="@id/image_view_add_task_list"
+	    android:layout_alignBottom="@id/image_view_add_task_list"
+	    android:layout_marginLeft="5dp"
+	    android:hint="@string/add_task_list"
+	    android:inputType="textCapWords"
+	    android:ellipsize="end"
+	    android:background="@null" />
+    
+    <TextView
+        android:id="@+id/text_view_title_task_lists"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/image_view_add_task_list"
+        android:layout_marginTop="15dp"
+        android:text="@string/title_tasks_lists" />
+    
+    <View
+	    android:layout_width="match_parent"
+	    android:layout_height="@dimen/hr_height"
+	    android:layout_below="@id/text_view_title_task_lists"
+	    android:background="@color/grey" />
+    
+	<com.mobeta.android.dslv.DragSortListView
+	    android:id="@+id/dslv_task_lists"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/text_view_title_task_lists"
+	    android:layout_marginTop="2dp"
+		android:dividerHeight="@dimen/divider_height"
+	    dslv:use_default_controller="true"
+	    dslv:drag_enabled="true"
+	    dslv:drag_handle_id="@id/drag_handle"
+	    dslv:drag_start_mode="onLongPress"
+	    dslv:sort_enabled="false"
+	    dslv:remove_enabled="true"
+	    dslv:remove_mode="slideRight"
+	    dslv:collapsed_height="1dp"
+	    dslv:float_alpha="0.6"
+	    dslv:float_background_color="@color/blue" />
+
+</RelativeLayout>

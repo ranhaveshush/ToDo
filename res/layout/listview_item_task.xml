@@ -1,27 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@id/drag_handle"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="@dimen/list_view_item_height" >
     
-    <TextView
-        android:id="@+id/text_view_task_title"
+    <CheckBox
+        android:id="@+id/checkbox_task_completed"
         android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_marginLeft="10dp"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="9dp"
         android:gravity="center_vertical"
-        android:textStyle="bold"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    <Button
-        android:id="@+id/button_done"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@id/text_view_task_title"
-        android:textSize="12dp"
-        android:text="@string/button_done"
-        android:focusable="false"
-        android:focusableInTouchMode="false" />
+        android:focusable="false" />
+        
+   	<LinearLayout
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="match_parent"
+   	    android:orientation="vertical"
+   	    android:layout_toRightOf="@id/checkbox_task_completed"
+   	    android:paddingLeft="10dp" >
+   	    
+	    <TextView
+	        android:id="@+id/text_view_task_title"
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_weight="1"
+	        android:gravity="center_vertical"
+	        android:lines="1"
+	        android:ellipsize="end" />
+	    
+	    <TextView
+	        android:id="@id/text_view_task_due_date"
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_weight="1"
+	        android:gravity="center_vertical"
+	        android:textColor="@color/blue"
+	        android:ellipsize="end"
+	        android:visibility="gone" />
+	    
+    </LinearLayout>
 	
 </RelativeLayout>

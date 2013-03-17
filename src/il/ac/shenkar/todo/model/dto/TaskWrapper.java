@@ -205,6 +205,9 @@ public class TaskWrapper implements Comparable<TaskWrapper> {
 		return rhsId.equals(lhsId);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(TaskWrapper another) {
 		String rhsId = getId();
@@ -212,6 +215,5 @@ public class TaskWrapper implements Comparable<TaskWrapper> {
 		
 		return rhsId.compareTo(lhsId);
 	}
-	
 
 }

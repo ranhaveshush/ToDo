@@ -5,8 +5,12 @@ package il.ac.shenkar.todo.syncadapter;
 
 import il.ac.shenkar.todo.config.ToDo;
 import il.ac.shenkar.todo.model.dao.tasks.TasksDAOFactory;
+import il.ac.shenkar.todo.model.dao.tasks.logic.ITaskListsDAO;
+import il.ac.shenkar.todo.model.dao.tasks.logic.ITaskListsDAO.ListMode;
 import il.ac.shenkar.todo.model.dao.tasks.logic.ITasksDAO;
+import il.ac.shenkar.todo.model.dto.TaskListWrapper;
 import il.ac.shenkar.todo.model.dto.TaskWrapper;
+import il.ac.shenkar.todo.utilities.PrefsUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,14 +21,11 @@ import java.util.Map;
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -35,8 +36,7 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.TasksScopes;
 import com.google.api.services.tasks.model.Task;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.api.services.tasks.model.TaskList;
 
 /**
  * SyncAdapter implementation for syncing sample SyncAdapter contacts to the
@@ -45,28 +45,18 @@ import com.google.gson.JsonParser;
  * update the contacts' status messages, which would be useful for a messaging
  * or social networking client.
  */
+// FIXME: use the SyncResult class to comunicate with the syncmanager.
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
+	/**
+	 * Logger's tag.
+	 */
 	private static final String TAG = "SyncAdapter";
-
-//	private static final String SYNC_MARKER_KEY = "il.ac.shenkar.todo.sync.marker";
-
-//	private static final boolean NOTIFY_AUTH_FAILURE = true;
 
 	/**
 	 * Holds the invoking context.
 	 */
 	private final Context context;
-
-	/**
-	 * Holds the account manager.
-	 */
-//	private final AccountManager mAccountManager;
-
-	/**
-	 * Holds the content resolver to the content provider.
-	 */
-	private final ContentResolver contentResolver;
 
 	/**
 	 * Google account credential for OAuth 2.0 protocol.
@@ -76,8 +66,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	/**
 	 * HttpTransport.
 	 */
-	private static final HttpTransport TRANSPORT = AndroidHttp
-			.newCompatibleTransport();
+	private static final HttpTransport TRANSPORT = AndroidHttp.newCompatibleTransport();
 
 	/**
 	 * JSON Factory.
@@ -87,22 +76,27 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	/**
 	 * Holds the google account name to sync with.
 	 */
-	private static String accountName = null;
+	private String accountName = null;
 	
 	/**
-	 * 
+	 * Holds the access auth token.
 	 */
-//	private static String authtoken = null;
-
+	private String authToken = null;
+	
 	/**
 	 * Holds Google Tasks API Service.
 	 */
-	private final Tasks service;
+	private Tasks service = null;
 	
 	/**
 	 * Holds the dao to the tasks resouce.
 	 */
-	private final ITasksDAO tasksDAO;
+	private ITasksDAO tasksDAO = null;
+
+	/**
+	 * Holds the dao to the task lists resouce.
+	 */
+	private ITaskListsDAO taskListsDAO = null;
 
 	/**
 	 * Full constructor.
@@ -116,26 +110,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		Log.d(TAG, "SyncAdapter(Context context, boolean autoInitialize)");
 
 		this.context = context;
-//		mAccountManager = AccountManager.get(context);
-		contentResolver = context.getContentResolver();
-
-		// Gets access token from the auth prefs file
-		SharedPreferences prefsFileAuth = context.getApplicationContext()
-				.getSharedPreferences(ToDo.Prefs.PREFS_FILE_AUTH,
-						Context.MODE_PRIVATE);
-		accountName = prefsFileAuth.getString(ToDo.Prefs.PREF_ACCOUNT_NAME,
-				null);
-
-		// Google Accounts
-		credential = GoogleAccountCredential.usingOAuth2(this.context,
-				TasksScopes.TASKS);
-		credential.setSelectedAccountName(accountName);
-
-		// Gets Google Tasks API Service
-		service = new Tasks(TRANSPORT, JSON_FACTORY, credential);
-		
-		// Gets the tasks resource DAO
-		tasksDAO = TasksDAOFactory.getFactory(this.context, TasksDAOFactory.SQLITE).getTasksDAO();
 	}
 
 	/*
@@ -154,132 +128,308 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 		Log.d(TAG, "Sync with Google account name: " + account.name);
 		Log.d(TAG, "Sync with Google account type: " + account.type);
-
-		Log.d(TAG, "######################### START SYNC #########################");
-
+		
 		try {
-//			// See if we already have a sync-state attached to this account.
-//			// By handing this value to the server, we can just get the tasks
-//			// that have
-//			// been updated on the server-side since our last sync-up
-//			// long lastSyncMarker = getServerSyncMarker(account);
-//
-//			// Use the account manager to request the AuthToken we'll need
-//			// to talk to our sample server. If we don't have an AuthToken
-//			// yet, this could involve a round-trip to the server to request
-//			// and AuthToken.
-//			// authtoken = mAccountManager.blockingGetAuthToken(account, "ah",
-//			// NOTIFY_AUTH_FAILURE);
-//			
-////			Cursor cursor = tasksDAO.getNotSynced("@default");
-////			
-////			Task task = null;
-////
-////			while (cursor.moveToNext()) {
-////				task = getTask(cursor);
-////				String taskTransState = (String) task
-////						.get(ToDo.Tasks.COLUMN_NAME_TRANS_STATE);
-////
-////				// Operates according the transitional state
-////				if (ToDo.Trans.STATE_UPDATING.equals(taskTransState)) {
-////					updateTask(task);
-////				} else if (ToDo.Trans.STATE_INSERTING.equals(taskTransState)) {
-////					insertTask(task);
-////				} else if (ToDo.Trans.STATE_DELETING.equals(taskTransState)) {
-////					deleteTask(task);
-////				} else if (ToDo.Trans.STATE_GETTING.equals(taskTransState)) {
-////					// Do nothing
-////				}
-////			}
-////
-////			cursor.close();
-//			
-			sync("@default");
-//
-//			// Save off the new sync marker. On our next sync, we only want to
-//			// receive
-//			// tasks that have changed since this sync...
-//			// setServerSyncMarker(account, newSyncState);
-//
+			// Gets account name and access auth token from prefs
+			accountName = PrefsUtils.getPrivatePref(context,
+					ToDo.Prefs.PREFS_FILE_AUTH,
+					ToDo.Prefs.PREF_ACCOUNT_NAME);
+			authToken = PrefsUtils.getPrivatePref(context,
+					ToDo.Prefs.PREFS_FILE_AUTH,
+					ToDo.Prefs.PREF_AUTH_TOKEN);
+			
+			Log.d(TAG, "Sync with preference account name: " + accountName);
+			Log.d(TAG, "Sync with preference auth token: " + authToken);
+	
+			// If the user authenticated a google account, fire sync
+			if (accountName != null && authToken != null) {
+				// Google Accounts
+				credential = GoogleAccountCredential.usingOAuth2(
+						this.context,
+						TasksScopes.TASKS,
+						TasksScopes.TASKS_READONLY);
+				credential.setSelectedAccountName(accountName);
+				
+				// Gets Google Tasks API Service
+				service = new Tasks(TRANSPORT, JSON_FACTORY, credential);
+				
+				// Gets the tasks resource DAO
+				tasksDAO = TasksDAOFactory.getFactory(this.context, TasksDAOFactory.SQLITE).getTasksDAO();
+				// Gets the task lists resource DAO
+				taskListsDAO = TasksDAOFactory.getFactory(this.context, TasksDAOFactory.SQLITE).getTaskListsDAO();
+				
+				Log.d(TAG, "SYNCING !!!");
+				
+				sync();
+			// If the user not authenticated a google account, don't sync
+			} else {
+				Log.d(TAG, "NOT SYNCING !!!");
+			}
 		} catch (final IOException e) {
-			Log.e(TAG, "IOException", e);
+			e.printStackTrace();
 			syncResult.stats.numIoExceptions++;
 		}
-
-		Log.d(TAG, "########################## END SYNC ##########################");
 	}
 	
 	/**
-	 * Syncs local and remote task list (Two-way).
-	 * 
-	 * @param taskListId
+	 * Syncs local and remote (Two-way) TaskLists and Tasks.
 	 */
-	private void sync(String taskListId) throws IOException {
-		// Logger
-		Log.d(TAG, "sync(String taskListId)");
+	private void sync() throws IOException {
+		Log.d(TAG, "########## START SYNC ####################################");
+		Log.d(TAG, "########## START SYNC TASK LISTS #########################");
+		
+		List<TaskListWrapper> localTaskListsNotDeleted = listLocalTaskLists(
+				new DateTime("2013-02-01T00:00:00.000"), ListMode.MODE_NOT_DELETED);
+		List<TaskListWrapper> localTaskListsDeleted = listLocalTaskLists(
+				new DateTime("2013-02-01T00:00:00.000"), ListMode.MODE_DELETED);
+		List<TaskListWrapper> remoteTaskLists = listRemoteTaskLists(
+				new DateTime("2013-02-01T00:00:00.000"));
+		
+		// Deletes task lists from both local and remote
+		deleteTaskListsFromLocal(localTaskListsNotDeleted, remoteTaskLists);
+		deleteTaskListsFromRemote(localTaskListsDeleted, remoteTaskLists);
+		
+		localTaskListsNotDeleted = listLocalTaskLists(
+				new DateTime("2013-02-01T00:00:00.000"), ListMode.MODE_NOT_DELETED);
+		remoteTaskLists = listRemoteTaskLists(
+				new DateTime("2013-02-01T00:00:00.000"));
+		
+		// Update >> Insert order cos of preformance resonses
+		updateTaskLists(localTaskListsNotDeleted, remoteTaskLists);
+		insetTaskLists(localTaskListsNotDeleted, remoteTaskLists);
+		
+		Log.d(TAG, "########## END SYNC TASK LISTS ##########################");
+		Log.d(TAG, "########## START SYNC TASKS #############################");
+		
+		List<TaskWrapper> localTasks = listLocalTasks(new DateTime("2013-02-01T00:00:00.000"));
+		List<TaskWrapper> remoteTasks = listRemoteTasks(new DateTime("2013-02-01T00:00:00.000"));
 
-		List<TaskWrapper> taskListLocal = getLocalTaskList(taskListId);
-		List<TaskWrapper> taskListRemote = getRemoteTaskList(taskListId);
+		// Update >> insert order cos of preformance resonses
+		updateTasks(localTasks, remoteTasks);
+		insertTasks(localTasks, remoteTasks);
 		
-		// FIXME: no need for deleting only updating to delete
-//		// Deleting
-//		List<TaskWrapper> tasksUnion = new ArrayList<TaskWrapper>();
-//		tasksUnion.addAll(taskListLocal);
-//		tasksUnion.removeAll(taskListRemote);
-//		tasksUnion.addAll(taskListRemote);
-//		for (TaskWrapper taskWrapper : tasksUnion) {
-//			Task task = taskWrapper.getTask();
-//			// If task marked for deletetion
-//			if (task.getDeleted() != null && task.getDeleted()) {
-//				// Gets task location local or remote
-//				String taskLocation = (String) task.get(ToDo.Tasks.TASK_LOCATION);
-//				// If task is local, delete task from remote
-//				if (ToDo.Tasks.LOCATION_LOCAL.equals(taskLocation)) {
-//					Log.d(TAG, "TASK BEFORE DELETE FROM REMOTE >>> \n" + task);
-//					service.tasks().delete(taskListId, task.getId()).execute();
-//				// If task is remote, delete task from local
-//				} else {
-//					Log.d(TAG, "TASK BEFORE DELETE FROM LOCAL >>> \n" + task);
-//					tasksDAO.delete(task);
-//				}
-//			}
-//		}
+		Log.d(TAG, "########## END SYNC TASKS ##############################");
+		Log.d(TAG, "########## END SYNC ####################################");
+	}
+	
+	private void deleteTaskListsFromLocal(
+			List<TaskListWrapper> localTaskListsNotDeleted,
+			List<TaskListWrapper> remoteTaskLists) throws IOException {
+		Log.d(TAG, "********** START DELETE LOCAL TASK LISTS ***************");
 		
-		// Updating
-		List<TaskWrapper> localIntersactionRemote = new ArrayList<TaskWrapper>();
-		localIntersactionRemote.addAll(taskListLocal);
-		localIntersactionRemote.retainAll(taskListRemote);
+		TaskList localTaskList = null;
+		
+		// Deleting from local
+		List<TaskListWrapper> localDiffRemote = new ArrayList<TaskListWrapper>();
+		localDiffRemote.addAll(localTaskListsNotDeleted);
+		localDiffRemote.removeAll(remoteTaskLists);
+		int localDeletedCounter = 0;
+		for (TaskListWrapper localTaskListWrapper : localDiffRemote) {
+			++localDeletedCounter;
+			localTaskList = localTaskListWrapper.getTaskList();
+			String localTaskListServerId = localTaskList.getId();
+			// If local task list isn't at remote and have server id,
+			// Means the task list was deleted from remote,
+			// So delete from local
+			if (localTaskListServerId != null) {
+				Log.d(TAG, "TASK LIST BEFORE DELETE LOCAL >>> \n" + localTaskList);
+				taskListsDAO.delete((Long) localTaskList.get(ToDo.TaskLists.COLUMN_NAME_CLIENT_ID));
+			}
+		}
+		
+		Log.d(TAG, "********************************************************");
+		Log.d(TAG, "Total LOCAL task lists Deleted: " + localDeletedCounter);
+		Log.d(TAG, "********** END DELETE LOCAL TASK LISTS *****************");
+	}
+	
+	private void deleteTaskListsFromRemote(
+			List<TaskListWrapper> localTaskListsDeleted,
+			List<TaskListWrapper> remoteTaskLists) throws IOException {
+		Log.d(TAG, "********** START DELETE REMOTE TASK LISTS **************");
+		
+		// FIXME: default task list can't be deleted by Google.
+		// It will be fixed in the next release, so fix it then.
+		// Gets the the default task list server id
+		TaskList taskListDefault = service.tasklists().get("@default").execute();
+		String taskListDefaultServerId = taskListDefault.getId();
+		
+		TaskList localTaskList = null;
+		
+		// Deleting from remote
+		List<TaskListWrapper> localIntersactionRemote = new ArrayList<TaskListWrapper>();
+		localIntersactionRemote.addAll(localTaskListsDeleted);
+		localIntersactionRemote.retainAll(remoteTaskLists);
+		Collections.sort( localIntersactionRemote );
+		int remoteDeletedCounter = 0;
+		for (TaskListWrapper localTaskListWrapper : localIntersactionRemote) {
+			localTaskList = localTaskListWrapper.getTaskList();
+			// FIXME:
+			// If this is the default task list, it can't be deleted from google,
+			// it's a bug by google that will be fixed in the next release.
+			if (taskListDefaultServerId.equals(localTaskList.getId())) {
+				Log.d(TAG, "BUG: default task list can't be deleted");
+				// Undeletes default task list
+				localTaskList.set(ToDo.TaskLists.COLUMN_NAME_DELETED, ToDo.TaskLists.COLUMN_VALUE_FALSE);
+				taskListsDAO.update(localTaskList);
+				continue;
+			}
+			++remoteDeletedCounter;
+			Log.d(TAG, "TASK LIST BEFORE DELETE REMOTE >>> \n" + localTaskList);
+			// Blocking code (Networking)
+			service.tasklists().delete(localTaskList.getId()).execute();
+			taskListsDAO.delete((Long) localTaskList.get(ToDo.TaskLists.COLUMN_NAME_CLIENT_ID));
+		}
+		
+		Log.d(TAG, "********************************************************");
+		Log.d(TAG, "Total REMOTE task lists Deleted: " + remoteDeletedCounter);
+		Log.d(TAG, "********** END DELETE REMOTE TASK LISTS ****************");
+	}
+
+	private void updateTaskLists(
+			List<TaskListWrapper> localTaskListsNotDeleted,
+			List<TaskListWrapper> remoteTaskLists) throws IOException {
+		Log.d(TAG, "********** START UPDATE TASK LISTS **********************");
+		
+		// Updating the intersacting task lists from local and remote
+		// The most updated task list updates the the other task list
+		List<TaskListWrapper> localIntersactionRemote = new ArrayList<TaskListWrapper>();
+		localIntersactionRemote.addAll(localTaskListsNotDeleted);
+		localIntersactionRemote.retainAll(remoteTaskLists);
 		Collections.sort( localIntersactionRemote );
 		
-		List<TaskWrapper> remoteIntersactionLocal = new ArrayList<TaskWrapper>();
-		remoteIntersactionLocal.addAll(taskListRemote);
-		remoteIntersactionLocal.retainAll(taskListLocal);
+		List<TaskListWrapper> remoteIntersactionLocal = new ArrayList<TaskListWrapper>();
+		remoteIntersactionLocal.addAll(remoteTaskLists);
+		remoteIntersactionLocal.retainAll(localTaskListsNotDeleted);
 		Collections.sort( remoteIntersactionLocal );
 		
-		Task localTask = null;
-		Task remoteTask = null;
-		DateTime localUpdated = null;
-		DateTime remoteUpdated = null;
+		TaskList localTaskList = null;
+		TaskList remoteTaskList = null;
 		long localUpdatedMillis;
 		long remoteUpdatedMillis;
 		
+		// Runs over all the intersacting task lists and update
+		int localUpdatedCounter = 0;
+		int remoteUpdatedCounter = 0;
 		for (int i=0; i<localIntersactionRemote.size(); ++i) {
-			localTask = localIntersactionRemote.get(i).getTask();
-			remoteTask = remoteIntersactionLocal.get(i).getTask();
-			localUpdated = localTask.getUpdated();
-			remoteUpdated = remoteTask.getUpdated();
-			localUpdatedMillis = localUpdated.getValue();
-			remoteUpdatedMillis = remoteUpdated.getValue();
+			localTaskList = localIntersactionRemote.get(i).getTaskList();
+			remoteTaskList = remoteIntersactionLocal.get(i).getTaskList();
+			localUpdatedMillis = localTaskList.getUpdated().getValue();
+			remoteUpdatedMillis = remoteTaskList.getUpdated().getValue();
 			// If no need for updated, continue
 			if (localUpdatedMillis == remoteUpdatedMillis) {
 				continue;
 			// If local updated then remote, updated remote
 			} else if (localUpdatedMillis > remoteUpdatedMillis) {
-				Log.d(TAG, "TASK BEFORE UPDATE REMOTE >>> \n" + localTask);
+				++remoteUpdatedCounter;
+				Log.d(TAG, "TASK LIST BEFORE UPDATE REMOTE >>> \n" + localTaskList);
 				// Blocking code (Networking)
-				service.tasks().update(taskListId, localTask.getId(), localTask).execute();
+				service.tasklists().update(localTaskList.getId(), localTaskList).execute();
 			// If remote updated then local, update local
 			} else if (localUpdatedMillis < remoteUpdatedMillis) {
+				++localUpdatedCounter;
+				// Preserve unknown fields from local task
+				Map<String, Object> unknownFields = localTaskList.getUnknownKeys();
+				// Sets the remote task with the local task unkown fields
+				remoteTaskList.setUnknownKeys(unknownFields);
+				Log.d(TAG, "TASK LIST BEFORE UPDATE LOCAL >>> \n" + localTaskList);
+				taskListsDAO.update(remoteTaskList);
+				Log.d(TAG, "TASK LIST AFTER UPDATE LOCAL >>> " + remoteTaskList);
+			}
+		}
+		
+		Log.d(TAG, "*********************************************************");
+		Log.d(TAG, "Total LOCAL task lists Updated: " + localUpdatedCounter);
+		Log.d(TAG, "Total REMOTE task lists Updated: " + remoteUpdatedCounter);
+		Log.d(TAG, "********** END UPDATE TASK LISTS ************************");
+	}
+	
+	private void insetTaskLists(
+			List<TaskListWrapper> localTaskListsNotDeleted,
+			List<TaskListWrapper> remoteTaskLists) throws IOException {
+		Log.d(TAG, "********** START INSERT TASK LISTS **********************");
+		
+		TaskList localTaskList = null;
+		TaskList remoteTaskList = null;
+		
+		// Inserting from remote to local
+		List<TaskListWrapper> remoteDiffLocal = new ArrayList<TaskListWrapper>();
+		remoteDiffLocal.addAll(remoteTaskLists);
+		remoteDiffLocal.removeAll(localTaskListsNotDeleted);
+		for (TaskListWrapper remoteTaskListWrapper : remoteDiffLocal) {
+			remoteTaskList = remoteTaskListWrapper.getTaskList();
+			Log.d(TAG, "TASK LIST BEFORE INSERT LOCAL >>> \n" + remoteTaskList);
+			remoteTaskList = taskListsDAO.insert(remoteTaskList);
+			Log.d(TAG, "TASK LIST AFTER INSERT LOCAL >>> \n" + remoteTaskList);
+		}
+		
+		// Inserting from local to remote
+		List<TaskListWrapper> localDiffRemote = new ArrayList<TaskListWrapper>();
+		localDiffRemote.addAll(localTaskListsNotDeleted);
+		localDiffRemote.removeAll(remoteTaskLists);
+		int localInsertedCounter = 0;
+		for (TaskListWrapper localTaskListWrapper : localDiffRemote) {
+			++localInsertedCounter;
+			localTaskList = localTaskListWrapper.getTaskList();
+			Log.d(TAG, "TASK LIST BEFORE INSERT REMOTE >>> \n" + localTaskList);
+			// Preserve unknown fields before overriding the task
+			Map<String, Object> unknownFields = localTaskList.getUnknownKeys();
+			// Blocking code (Networking)
+			localTaskList = service.tasklists().insert(localTaskList).execute();
+			// Retrieve unkown fields after overriding the task
+			localTaskList.setUnknownKeys(unknownFields);
+			Log.d(TAG, "TASK LIST AFTER INSERT REMOTE >>> \n" + localTaskList);
+			taskListsDAO.update(localTaskList);
+		}
+		
+		Log.d(TAG, "*********************************************************");
+		Log.d(TAG, "Total LOCAL task lists Inserted: " + localInsertedCounter);
+		Log.d(TAG, "********** END INSERT TASK LISTS ************************");
+	}
+
+	private void updateTasks(
+			List<TaskWrapper> localTasks,
+			List<TaskWrapper> remoteTasks) throws IOException {
+		Log.d(TAG, "********** START UPDATE TASKS ***************************");
+		
+		// Updating the intersacting tasks from local and remote
+		// The most updated task updates the the other task
+		List<TaskWrapper> localIntersactionRemote = new ArrayList<TaskWrapper>();
+		localIntersactionRemote.addAll(localTasks);
+		localIntersactionRemote.retainAll(remoteTasks);
+		Collections.sort( localIntersactionRemote );
+		
+		List<TaskWrapper> remoteIntersactionLocal = new ArrayList<TaskWrapper>();
+		remoteIntersactionLocal.addAll(remoteTasks);
+		remoteIntersactionLocal.retainAll(localTasks);
+		Collections.sort( remoteIntersactionLocal );
+		
+		Task localTask = null;
+		Task remoteTask = null;
+		long localUpdatedMillis;
+		long remoteUpdatedMillis;
+		
+		// Runs over all the intersacting tasks and update
+		int localUpdatedCounter = 0;
+		int remoteUpdatedCounter = 0;
+		for (int i=0; i<localIntersactionRemote.size(); ++i) {
+			localTask = localIntersactionRemote.get(i).getTask();
+			remoteTask = remoteIntersactionLocal.get(i).getTask();
+			localUpdatedMillis = localTask.getUpdated().getValue();
+			remoteUpdatedMillis = remoteTask.getUpdated().getValue();
+			// If no need for updated, continue
+			if (localUpdatedMillis == remoteUpdatedMillis) {
+				continue;
+			// If local updated then remote, updated remote
+			} else if (localUpdatedMillis > remoteUpdatedMillis) {
+				++remoteUpdatedCounter;
+				Log.d(TAG, "TASK BEFORE UPDATE REMOTE >>> \n" + localTask);
+				long taskListClientId = (Long) localTask.get(ToDo.Tasks.COLUMN_NAME_TASK_LIST_CLIENT_ID);
+				String taskListServerId = taskListsDAO.get(taskListClientId).getId();
+				// Blocking code (Networking)
+				service.tasks().update(taskListServerId, localTask.getId(), localTask).execute();
+			// If remote updated then local, update local
+			} else if (localUpdatedMillis < remoteUpdatedMillis) {
+				++localUpdatedCounter;
 				// Preserve unknown fields from local task
 				Map<String, Object> unknownFields = localTask.getUnknownKeys();
 				// Sets the remote task with the local task unkown fields
@@ -290,175 +440,198 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			}
 		}
 		
+		Log.d(TAG, "*********************************************************");
+		Log.d(TAG, "Total LOCAL tasks Updated: " + localUpdatedCounter);
+		Log.d(TAG, "Total REMOTE tasks Updated: " + remoteUpdatedCounter);
+		Log.d(TAG, "********** END UPDATE TASKS *****************************");
+	}
+	
+	private void insertTasks(
+			List<TaskWrapper> localTasks,
+			List<TaskWrapper> remoteTasks) throws IOException {
+		Log.d(TAG, "********** START INSERT TASKS ***************************");
+		
+		Task localTask = null;
+		Task remoteTask = null;
+		
 		// Inserting from remote to local
 		List<TaskWrapper> remoteDiffLocal = new ArrayList<TaskWrapper>();
-		remoteDiffLocal.addAll(taskListRemote);
-		remoteDiffLocal.removeAll(taskListLocal);
+		remoteDiffLocal.addAll(remoteTasks);
+		remoteDiffLocal.removeAll(localTasks);
+		int localInsertedCounter = 0;
 		for (TaskWrapper remoteTaskWrapper : remoteDiffLocal) {
+			++localInsertedCounter;
 			remoteTask = remoteTaskWrapper.getTask();
 			Log.d(TAG, "TASK BEFORE INSERT LOCAL >>> \n" + remoteTask);
+			
+			///////////////////////
+			// Gets the task list server id from task's selflink
+			String selfLink = remoteTask.getSelfLink();
+			String[] stringsArray = selfLink.split("/");
+			String taskListServerId = stringsArray[6];
+			// Gets the task list client id from the local db
+			long taskListClientId = taskListsDAO.getTaskListClientId(taskListServerId);
+			// Sets the task's task list client id
+			remoteTask.set(ToDo.Tasks.COLUMN_NAME_TASK_LIST_CLIENT_ID, taskListClientId);
+			///////////////////////
+			
 			remoteTask = tasksDAO.insert(remoteTask);
 			Log.d(TAG, "TASK AFTER INSERT LOCAL >>> \n" + remoteTask);
 		}
 		
 		// Inserting from local to remote
 		List<TaskWrapper> localDiffRemote = new ArrayList<TaskWrapper>();
-		localDiffRemote.addAll(taskListLocal);
-		localDiffRemote.removeAll(taskListRemote);
+		localDiffRemote.addAll(localTasks);
+		localDiffRemote.removeAll(remoteTasks);
+		int remoteInsertedCounter = 0;
 		for (TaskWrapper localTaskWrapper : localDiffRemote) {
+			++remoteInsertedCounter;
 			localTask = localTaskWrapper.getTask();
 			Log.d(TAG, "TASK BEFORE INSERT REMOTE >>> \n" + localTask);
+			long taskListClientId = (Long) localTask.get(ToDo.Tasks.COLUMN_NAME_TASK_LIST_CLIENT_ID);
+			// FIXME: IDAN HTC NPE
+			String taskListServerId = taskListsDAO.get(taskListClientId).getId();
 			// Preserve unknown fields before overriding the task
 			Map<String, Object> unknownFields = localTask.getUnknownKeys();
 			// Blocking code (Networking)
-			localTask = service.tasks().insert(taskListId, localTask).execute();
+			localTask = service.tasks().insert(taskListServerId, localTask).execute();
 			// Retrieve unkown fields after overriding the task
 			localTask.setUnknownKeys(unknownFields);
 			Log.d(TAG, "TASK AFTER INSERT REMOTE >>> \n" + localTask);
 			tasksDAO.update(localTask);
 		}
+		
+		Log.d(TAG, "*********************************************************");
+		Log.d(TAG, "Total LOCAL tasks Inserted: " + localInsertedCounter);
+		Log.d(TAG, "Total REMOTE tasks Inserted: " + remoteInsertedCounter);
+		Log.d(TAG, "********** END INSERT TASKS *****************************");
 	}
 	
 	/**
-	 * Gets the local task list.
+	 * Gets all the remote task lists with updated datetime later
+	 * then a given last sync datetime.
 	 * 
-	 * @param taskListId
-	 * @return
+	 * @param lastSyncDate	DateTime represents the last sync date.
+	 * @return				List of taskListWarppers
 	 */
-	private List<TaskWrapper> getLocalTaskList(String taskListId) {
-		List<Task> localTaskList = new ArrayList<Task>();
-
-		String selection = ToDo.Tasks.COLUMN_NAME_TASKLIST_ID + "=?";
-		String[] selectionArgs = { taskListId };
-
-		Cursor cursor = contentResolver.query(
-				ToDo.Tasks.CONTENT_URI,
-				ToDo.Tasks.PROJECTION,
-				selection, selectionArgs, null);
+	private List<TaskListWrapper> listLocalTaskLists(DateTime lastSyncDate, ListMode listMode) {
+		// Creates a comparable task lists list with the help or TaskListWrapper class
+		List<TaskListWrapper> localTaskListWarppers = new ArrayList<TaskListWrapper>();
 		
+		Cursor cursor = taskListsDAO.list(listMode);
+		
+		long lastSyncDateMillis = lastSyncDate.getValue();
 		while (cursor.moveToNext()) {
-			Task task = getTask(cursor);
-			localTaskList.add(task);
+			TaskList taskList = taskListsDAO.get(cursor);
+			long taskListUpdatedMillis = taskList.getUpdated().getValue();
+			// If task list updated later then the last sync
+			if (lastSyncDateMillis < taskListUpdatedMillis) {
+				// add the task list to the list
+				localTaskListWarppers.add(new TaskListWrapper(taskList));
+			}
 		}
 		
 		cursor.close();
-		
-		List<TaskWrapper> wrapperTaskListLocal = new ArrayList<TaskWrapper>();
-		for (Task task : localTaskList) {
-			TaskWrapper taskWrapper = new TaskWrapper(task);
-			wrapperTaskListLocal.add(taskWrapper);
-		}
 
-		return wrapperTaskListLocal;
+		// returns the comparable task list wrappers list
+		return localTaskListWarppers;
 	}
 
 	/**
-	 * Gets the remote task list.
+	 * Gets all the remote task lists list with updated datetime later
+	 * then a given last sync datetime.
 	 * 
-	 * @param taskListId
-	 * @return
+	 * @param lastSyncDate	DateTime represents the last sync date.
+	 * @return				List of taskListWarppers
 	 */
-	private List<TaskWrapper> getRemoteTaskList(String taskListId) {
-		List<Task> remoteTaskList = null;
+	private List<TaskListWrapper> listRemoteTaskLists(DateTime lastSyncDate) throws IOException {
+		// Creates a comparable task lists list with the help or TaskListWrapper class
+		List<TaskListWrapper> remoteTaskListWrappers = new ArrayList<TaskListWrapper>();
+		List<TaskList> remoteTaskLists = service.tasklists().list().execute().getItems();
 
-		try {
-			remoteTaskList = service.tasks().list(taskListId)
-					/*.setUpdatedMin(updatedMin)*/// Set as last sync datetime 
+		long lastSyncDateMillis = lastSyncDate.getValue();
+		for (TaskList taskList : remoteTaskLists) {
+			long taskListUpdatedMillis = taskList.getUpdated().getValue();
+			// If task list updated later then the last sync
+			if (lastSyncDateMillis < taskListUpdatedMillis) {
+				// Wraps task list with a wrapper and adds to the task list wrappers list
+				remoteTaskListWrappers.add(new TaskListWrapper(taskList));
+			}
+		}
+
+		// returns the comparable task list wrappers list
+		return remoteTaskListWrappers;
+	}
+
+	/**
+	 * Gets all the local tasks with updated datetime later
+	 * then a given last sync datetime.
+	 * 
+	 * @param lastSyncDate	DateTime represents the last sync date.
+	 * @return				List of taskwarppers
+	 */
+	private List<TaskWrapper> listLocalTasks(DateTime lastSyncDate) {
+		// Creates a comparable task list with the help or TaskWrapper class
+		List<TaskWrapper> localTaskWarppers = new ArrayList<TaskWrapper>();
+
+		Cursor cursor = tasksDAO.listAll();
+		
+		long lastSyncDateMillis = lastSyncDate.getValue();
+		while (cursor.moveToNext()) {
+			Task task = tasksDAO.get(cursor);
+			long taskUpdatedMillis = task.getUpdated().getValue();
+			// If task updated later then the last sync
+			// FIXME: when support lastSyncDate
+			//if (lastSyncDateMillis < taskUpdatedMillis) {
+				// Wraps task with a wrapper and adds to the task wrappers list
+				localTaskWarppers.add(new TaskWrapper(task));
+			//}
+		}
+		
+		cursor.close();
+
+		// returns the comparable task wrappers list
+		return localTaskWarppers;
+	}
+
+	/**
+	 * Gets all the remote tasks with updated datetime later
+	 * then a given last sync datetime.
+	 * 
+	 * @param lastSyncDate	DateTime represents the last sync date.
+	 * @return				List of taskwarppers
+	 */
+	private List<TaskWrapper> listRemoteTasks(DateTime lastSyncDate) throws IOException {
+		List<TaskList> remoteTaskLists = null;
+		List<Task> remoteTasks = new ArrayList<Task>();
+		List<Task> tempTasks = null;
+		
+		remoteTaskLists = service.tasklists().list().execute().getItems();
+
+		for (TaskList taskList : remoteTaskLists) {
+			// Gets the task list server id
+			String taskListServerId = taskList.getId();
+			// Gets all the task list tasks later then lastSyncDate
+			tempTasks = service.tasks().list(taskListServerId)
+					// FIXME: see if it works
+					/*.setUpdatedMin(lastSyncDate.toString())*/ 
 					.setMaxResults(1000L)
 					.setShowDeleted(true).execute().getItems();
-		} catch (IOException e) {
-			e.printStackTrace();
-			handleException(e);
+			// Collects all the remote tasks from every remote task list
+			if (tempTasks != null) {
+				remoteTasks.addAll(tempTasks);
+			}
 		}
 		
-		// Creates a comparable list with the help or TaskWrapper class
-		List<TaskWrapper> wrapperTaskListRemote = new ArrayList<TaskWrapper>();
-		for (Task task : remoteTaskList) {
+		// Creates a comparable task list with the help or TaskWrapper class
+		List<TaskWrapper> remoteWrapperTaskList = new ArrayList<TaskWrapper>();
+		for (Task task : remoteTasks) {
 			TaskWrapper taskWrapper = new TaskWrapper(task);
-			wrapperTaskListRemote.add(taskWrapper);
+			remoteWrapperTaskList.add(taskWrapper);
 		}
 
-		return wrapperTaskListRemote;
-	}
-
-	/**
-	 * Gets the task from the cursor in its current position.
-	 * 
-	 * @param cursor
-	 * @return
-	 */
-	private Task getTask(Cursor cursor) {
-		long taskClientId = cursor.getLong(ToDo.Tasks.COLUMN_POSITION_CLIENT_ID);
-		String taskKind = cursor.getString(ToDo.Tasks.COLUMN_POSITION_KIND);
-		String taskServerId = cursor.getString(ToDo.Tasks.COLUMN_POSITION_SERVER_ID);
-		String taskTitle = cursor.getString(ToDo.Tasks.COLUMN_POSITION_TITLE);
-		String taskUpdated = cursor.getString(ToDo.Tasks.COLUMN_POSITION_UPDATED);
-		String taskSelfLink = cursor.getString(ToDo.Tasks.COLUMN_POSITION_SELF_LINK);
-		String taskParent = cursor.getString(ToDo.Tasks.COLUMN_POSITION_PARENT);
-		String taskPosition = cursor.getString(ToDo.Tasks.COLUMN_POSITION_POSITION);
-		String taskNotes = cursor.getString(ToDo.Tasks.COLUMN_POSITION_NOTES);
-		String taskStatus = cursor.getString(ToDo.Tasks.COLUMN_POSITION_STATUS);
-		String taskDue = cursor.getString(ToDo.Tasks.COLUMN_POSITION_DUE);
-		String taskCompleted = cursor.getString(ToDo.Tasks.COLUMN_POSITION_COMPLETED);
-		int taskDeleted = cursor.getInt(ToDo.Tasks.COLUMN_POSITION_DELETED);
-		int taskHidden = cursor.getInt(ToDo.Tasks.COLUMN_POSITION_HIDDEN);
-		String taskListId = cursor.getString(ToDo.Tasks.COLUMN_POSITION_TASKLIST_ID);
-
-		Task task = new Task();
-		task.set(ToDo.Tasks.COLUMN_NAME_CLIENT_ID, taskClientId);
-		task.setKind(taskKind);
-		task.set(ToDo.Tasks.COLUMN_NAME_SERVER_ID, taskServerId);
-		task.setTitle(taskTitle);
-		task.setUpdated(DateTime.parseRfc3339(taskUpdated));
-		task.setSelfLink(taskSelfLink);
-		task.setParent(taskParent);
-		task.setPosition(taskPosition);
-		task.setNotes(taskNotes);
-		task.setStatus(taskStatus);
-		if (taskDue != null) {
-			task.setDue(DateTime.parseRfc3339(taskDue));
-		}
-		if (taskCompleted != null) {
-			task.setCompleted(DateTime.parseRfc3339(taskCompleted));
-		}
-		task.setDeleted((taskDeleted == ToDo.Tasks.COLUMN_VALUE_FALSE) ? false : true);
-		task.setHidden((taskHidden == ToDo.Tasks.COLUMN_VALUE_FALSE) ? false : true);
-		task.set(ToDo.Tasks.COLUMN_NAME_TASKLIST_ID, taskListId);
-
-		return task;
-	}
-
-	/**
-	 * Handles the exception.
-	 * 
-	 * @param exception
-	 *            Exception to handle
-	 */
-	private void handleException(Exception exception) {
-		String message = exception.getMessage();
-		int posLeftBracket = message.indexOf('{');
-		int posRightBracket = message.lastIndexOf('}');
-		message = message.substring(posLeftBracket, posRightBracket + 1);
-		JsonObject error = new JsonParser().parse(message).getAsJsonObject();
-		int errorCode = error.get("code").getAsInt();
-		String errorMsg = error.get("message").getAsString();
-
-		switch (errorCode) {
-		// Invalid authorization header.
-		// The access token you're using is either expired or invalid.
-		case 401:
-			credential.getGoogleAccountManager()
-					.invalidateAuthToken(""/* authtoken */);
-			break;
-		case 403:
-			if ("The authenticated user has not granted the app {appId} access to the file {fileId}"
-					.equals(errorMsg)) {
-				Toast.makeText(this.context, errorMsg, Toast.LENGTH_SHORT).show();
-				// FIXME: handle it properly.
-			}
-			// FIXME: for debug only.
-			Toast.makeText(this.context, errorMsg, Toast.LENGTH_SHORT).show();
-		}
+		// returns the comparable task wrappers list
+		return remoteWrapperTaskList;
 	}
 
 }

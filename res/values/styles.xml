@@ -1,6 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="android:Theme.Light" />
+    <style name="AppTheme" parent="Theme.Sherlock.Light" />
+
+    <!-- Notes rows styles -->
+    <style name="horizontalRow">
+        <item name="android:layout_width">@dimen/note_red_line_width</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@color/note_red</item>
+    </style>
+
+    <style name="verticalRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/note_red_line_height</item>
+        <item name="android:background">@color/note_red</item>
+    </style>
+
+    
+    <!-- Task title styles -->
+    <style name="task_title_completed" parent="android:style/TextAppearance.Medium">
+        <item name="android:textColor">@color/task_comleted</item>
+    </style>
+
+    <style name="task_title_not_completed" parent="android:style/TextAppearance.Medium">
+    </style>
+    
+    
+    <!-- Task due styles -->
+    <style name="task_due_past" parent="android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/task_due_past</item>
+    </style>
+    
+    <style name="task_due_present" parent="android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/task_due_present</item>
+    </style>
+    
+    <style name="task_due_future" parent="android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/task_due_future</item>
+    </style>
+    
+    <style name="task_due_completed" parent="android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/task_due_completed</item>
+    </style>
 
 </resources>

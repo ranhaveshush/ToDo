@@ -3,22 +3,22 @@
  */
 package il.ac.shenkar.todo.controller.fragments;
 
-import java.util.Calendar;
-
+import il.ac.shenkar.todo.R;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.widget.DatePicker;
-import android.app.Activity;
-import android.app.DatePickerDialog;
-import android.app.DatePickerDialog.OnDateSetListener;
-import android.app.Dialog;
 
 /**
  * @author ran
  *
  */
-public class DatePickerFragment extends DialogFragment implements OnDateSetListener {
+public class DatePickerFragment extends DialogFragment {
 	
 	/**
 	 * Logger tag.
@@ -32,9 +32,9 @@ public class DatePickerFragment extends DialogFragment implements OnDateSetListe
 	 * @author ran
 	 *
 	 */
-	public interface OnDatePickedListener {
+	public interface DatePickerListener {
 		/**
-		 * When date picked set this is the event callback function
+		 * When date on this is the event callback function
 		 * to notify the parent activity.
 		 * 
 		 * @param fragmentTag	String represents the fragment's tag
@@ -42,51 +42,79 @@ public class DatePickerFragment extends DialogFragment implements OnDateSetListe
 		 * @param monthOfYear	Integer represents the month
 		 * @param dayOfMonth	Integer represents the day
 		 */
-		public void onDatePicked(String fragmentTag, int year, int monthOfYear, int dayOfMonth);
+		public void onDateOn(String fragmentTag, int year, int monthOfYear, int dayOfMonth);
+		
+		/**
+		 * When date off this is the event callback function
+		 * to notify the parent activity.
+		 * 
+		 * @param fragmentTag	String represents the fragment's tag
+		 */
+		public void onDateOff(String fragmentTag);
 	}
 	
 	/**
 	 * Listener.
 	 */
-	private OnDatePickedListener listener = null;
+	private DatePickerListener mListener = null;
+	
+	/**
+	 * Holds the hosting activity.
+	 */
+	private Activity hostingActivity = null;
+	
+	/* (non-Javadoc)
+	 * @see android.support.v4.app.DialogFragment#onAttach(android.app.Activity)
+	 */
+	@Override
+	public void onAttach(Activity activity) {
+		// Logger
+		Log.d(TAG, "onAttach(Activity activity)");
+		
+		super.onAttach(activity);
+		try {
+			mListener = (DatePickerListener) activity;
+			// Gets the hosting activity
+			hostingActivity = activity;
+		} catch (ClassCastException e) {
+			throw new ClassCastException(activity + " must implement DatePickerListener");
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see android.support.v4.app.DialogFragment#onCreateDialog(android.os.Bundle)
 	 */
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		// Use the current date as the default date in the picker
-		final Calendar c = Calendar.getInstance();
-		int year = c.get(Calendar.YEAR);
-		int month = c.get(Calendar.MONTH);
-		int day = c.get(Calendar.DAY_OF_MONTH);
+		// Logger
+		Log.d(TAG, "onCreateDialog(Bundle savedInstanceState)");
 		
-		// Create a new instance of DatePickerDialog and return it
-		return new DatePickerDialog(getActivity(), this, year, month, day);
-	}
-
-	/* (non-Javadoc)
-	 * @see android.app.DatePickerDialog.OnDateSetListener#onDateSet(android.widget.DatePicker, int, int, int)
-	 */
-	@Override
-	// FIXME: Why this method invoked twice
-	public void onDateSet(DatePicker view, int year, int monthOfYear,
-			int dayOfMonth) {
-		Log.d(TAG, "Date picked: " + year + "/" + monthOfYear + "/" + dayOfMonth);
-		listener.onDatePicked(getTag(), year, monthOfYear, dayOfMonth);
-	}
-
-	/* (non-Javadoc)
-	 * @see android.support.v4.app.DialogFragment#onAttach(android.app.Activity)
-	 */
-	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		try {
-			listener = (OnDatePickedListener) activity;
-		} catch (ClassCastException e) {
-			throw new ClassCastException(activity + " must implement OnDatePickedListener");
-		}
+		// Inflate the date picker view
+		LayoutInflater inflater = hostingActivity.getLayoutInflater();
+		final DatePicker dateDialog = (DatePicker) inflater.inflate(R.layout.date_dialog, null);
+		
+		// Create a new instance of AlertDialog and return it
+		AlertDialog datePickerDialog = new AlertDialog.Builder(hostingActivity)
+		.setTitle(R.string.date_picker_title)
+		.setView(dateDialog)
+		.setPositiveButton(R.string.alert_dialog_button_positive, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            	mListener.onDateOn(getTag(),
+            			dateDialog.getYear(),
+            			dateDialog.getMonth(),
+            			dateDialog.getDayOfMonth());
+            }
+        })
+		.setNegativeButton(R.string.alert_dialog_button_negative, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            	mListener.onDateOff(getTag());
+            }
+        })
+        .create();
+		
+		return datePickerDialog;
 	}
 
 }
