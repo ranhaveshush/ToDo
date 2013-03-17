@@ -1,28 +1,51 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <string name="app_name">ToDo</string>
+    <string name="app_name">Checked</string>
     
-    <!-- Task list activity -->
-    <string name="title_activity_tasks_list">Tasks</string>
+    <!-- Credential activity -->
+    <string name="title_activity_credential">Credentials</string>
+
+    <!-- MenuFragment Fragment -->
+    <string name="title_account">ACCOUNT</string>
+    <string name="title_tasks_lists">TASKS LISTS</string>
+    <string name="add_task_list">Add a list&#8230;</string>
+
+    <!-- TaskListFragment Fragment -->
     <string name="menu_item_microphone">Microphone</string>
     <string name="menu_item_task_title">I Want to&#8230;</string>
     <string name="menu_item_add_task">Add Task</string>
     <string name="menu_item_edit_task">Edit Task</string>
-    <string name="menu_item_settings">Settings</string>
     <string name="text_view_empty_list">None Tasks</string>
     
-    <!-- Task editor activity -->
-    <string name="title_activity_task_editor">Task Editor</string>
+    <!-- TaskEditorFragment Fragment -->
+    <string name="menu_item_save_task">Save Task</string>
+    <string name="menu_item_completed_task">Completed Task</string>
     <string name="menu_item_save_task">Save Task</string>
     <string name="menu_item_delete_task">Delete Task</string>
-    <string name="hint_task_title">Title</string>
-    <string name="hint_task_description">Description</string>
+    <string name="hint_task_title">Set Task Title</string>
+    <string name="hint_task_notes">Add Notes&#8230;</string>
+    <string name="hint_task_due_label">DUE</string>
+    <string name="hint_task_due_date">Set due date</string>
     <string name="hint_task_reminders_label">REMINDERS</string>
-    <string name="hint_task_reminder_time">Time</string>
-    <string name="hint_task_reminder_date">Date</string>
-    <string name="hint_task_reminder_location">Location</string>
+    <string name="hint_task_reminder_datetime">Remind me by Time</string>
+    <string name="hint_task_reminder_location">Remind me by Loaction</string>
+    <string name="hint_auto_complete_text_view_location">Enter Address or Place</string>
+    <string name="task_notes_label">Notes:</string>
     
+    <!-- PickerFragment Fragments -->
+    <string name="date_picker_title">Pick a Date</string>
+    <string name="datetime_picker_title">Pick Date and Time</string>
+    <string name="location_picker_title">Pick Location</string>
+    <string name="location_picker_notify_when">Notify when:</string>
+    <string name="location_picker_entering_location">Entering location</string>
+    <string name="location_picker_exiting_location">Exiting location</string>
+    <string name="alert_dialog_button_positive">Set</string>
+    <string name="alert_dialog_button_negative">Cancel</string>
+
     <!-- Task list item view -->
-    <string name="button_done">Done</string>
+    <string name="ic_reminder_datetime">Has time reminder</string>
+    <string name="ic_reminder_location">Has location reminder</string>
+    <string name="title_activity_task_editor_fragment">TaskEditorFragmentActivity</string>
 
 </resources>

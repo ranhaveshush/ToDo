@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <!-- Global dimens -->
+    <dimen name="divider_height">1dp</dimen>
+    
+    <!-- MenuFragment dimens -->
+    <dimen name="padding">10dp</dimen>
+    <dimen name="hr_height">1dip</dimen>
+    
+    <!-- SlidingMenu dimens -->
+    <dimen name="slidingmenu_offset">48dp</dimen>
+    <dimen name="slidingmenu_shadow_width">10dp</dimen>
+    
+    <!-- Note dimens -->
+    <dimen name="note_red_line_height">1dp</dimen>
+    <dimen name="note_red_line_width">1dp</dimen>
+    <dimen name="note_line_spacing">10dp</dimen>
+    <dimen name="note_line_height">30dp</dimen>
+    <dimen name="note_left_margin">50dp</dimen>
+    
+    <!-- ListView -->
+    <dimen name="list_view_item_height">50dp</dimen>
+    
+</resources>

@@ -1,14 +1,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dslv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <ListView
-        android:id="@android:id/list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbarStyle="outsideOverlay" />
+    <com.mobeta.android.dslv.DragSortListView
+	    android:id="@android:id/list"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_margin="3dp"
+	    android:dividerHeight="1dp"
+	    dslv:use_default_controller="true"
+	    dslv:drag_enabled="true"
+	    dslv:drag_handle_id="@id/drag_handle"
+	    dslv:drag_start_mode="onLongPress"
+	    dslv:drag_scroll_start="0.3"
+	    dslv:max_drag_scroll_speed="0.5"
+	    dslv:sort_enabled="true"
+	    dslv:remove_enabled="true"
+	    dslv:remove_mode="slideRight"
+	    dslv:collapsed_height="1dp"
+	    dslv:float_alpha="0.6"
+	    dslv:float_background_color="@color/blue"
+	    dslv:slide_shuffle_speed="0.3"
+	    dslv:track_drag_sort="true" />
     
     <TextView
         android:id="@android:id/empty"

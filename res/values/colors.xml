@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="blue">#33b5e5</color>
+    <color name="darkblue">#0099cc</color>
+    <color name="grey">#aaaaaa</color>
+    <color name="grayStart">#adadad</color>
+    <color name="grayEnd">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="bg_handle_pressed">#a0a0a0</color>
+
+    <!-- Note Colors -->
+    <color name="note_yellow">#FFFD91</color>
+    <color name="note_red">#FF7A78</color>
+    <color name="note_grey">#A8A8A8</color>
+    <color name="black_overlay">#66000000</color>
+    
+    <!-- Task List Item Colors -->
+    <color name="task_comleted">#B0B0B0</color>
+    <color name="task_due_past">#FF7A78</color>
+    <color name="task_due_present">#33b5e5</color>
+    <color name="task_due_future">#33b5e5</color>
+    <color name="task_due_completed">#B0B0B0</color>
+
+</resources>

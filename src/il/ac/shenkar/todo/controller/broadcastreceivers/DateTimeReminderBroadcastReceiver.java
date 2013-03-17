@@ -4,12 +4,8 @@
 package il.ac.shenkar.todo.controller.broadcastreceivers;
 
 import il.ac.shenkar.todo.R;
-import il.ac.shenkar.todo.controller.activities.TaskEditorActivity;
-import il.ac.shenkar.todo.model.contentproviders.ToDo;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import il.ac.shenkar.todo.config.ToDo;
+import il.ac.shenkar.todo.controller.activities.TaskEditorFragmentActivity;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -35,30 +31,31 @@ public class DateTimeReminderBroadcastReceiver extends BroadcastReceiver {
 	/* (non-Javadoc)
 	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 	 */
-	@SuppressLint("NewApi")
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// Logger
 		Log.d(TAG, "onReceive(Context context, Intent intent)");
 		
 		// Gets the task to remind info from the recived intent
-		long taskToRemindId = intent.getLongExtra(ToDo.Extras.EXTRA_TASK_ID, -1);
+		int reminderId = intent.getIntExtra(ToDo.Extras.EXTRA_REMINDER_ID, -1);
+		long taskClientId = intent.getLongExtra(ToDo.Extras.EXTRA_TASK_CLIENT_ID, -1);
 		String taskTitle = intent.getStringExtra(ToDo.Extras.EXTRA_TASK_TITLE);
-		String taskDescription = intent.getStringExtra(ToDo.Extras.EXTRA_TASK_DESCRIPTION);
+		String taskNotes = intent.getStringExtra(ToDo.Extras.EXTRA_TASK_NOTES);
 		
 		// Creates pending intent to invoke when the notification clicked
-		Intent myIntent = new Intent(context, TaskEditorActivity.class);
-		myIntent.setAction(ToDo.Actions.ACTION_EDIT_EXISTING_TASK);
-		myIntent.putExtra(ToDo.Extras.EXTRA_TASK_ID, taskToRemindId);
-		PendingIntent pendingIntent = PendingIntent.getActivity(context, ((Long)taskToRemindId).intValue(), myIntent, 0);
+		Intent myIntent = new Intent(context, TaskEditorFragmentActivity.class);
+		myIntent.setAction(ToDo.Actions.ACTION_EDIT_TASK);
+		myIntent.putExtra(ToDo.Extras.EXTRA_TASK_CLIENT_ID, taskClientId);
+		PendingIntent pendingIntent = PendingIntent.getActivity(context, reminderId, myIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
+		/// Constructs the notification
 		Notification notification = new Notification(R.drawable.ic_launcher, taskTitle, System.currentTimeMillis());
-		notification.setLatestEventInfo(context, taskTitle, taskDescription, pendingIntent);
+		notification.setLatestEventInfo(context, taskTitle, taskNotes, pendingIntent);
 		notification.defaults |= Notification.DEFAULT_SOUND;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		
 		NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(((Long)taskToRemindId).intValue(), notification);
+		notificationManager.notify(reminderId, notification);
 	}
 
 }

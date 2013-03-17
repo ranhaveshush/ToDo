@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <!-- 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/note_yellow" >
+        
+        <View
+		    style="@style/horizontalRow"
+		    android:layout_marginLeft="40dp" />
+    
+	    <View
+		    style="@style/horizontalRow"
+		    android:layout_marginLeft="45dp" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_1"
+		    style="@style/verticalRow"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_2"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_1"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_3"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_2"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_4"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_3"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_5"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_4"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_6"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_5"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_7"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_6"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_8"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_7"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_9"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_8"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_10"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_9"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_11"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_10"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_12"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_11"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_13"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_12"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_14"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_13"
+		    android:layout_marginTop="@dimen/note_line_height" />
+	    
+	    <View
+	        android:id="@+id/view_red_line_15"
+		    style="@style/verticalRow"
+		    android:layout_below="@id/view_red_line_14"
+		    android:layout_marginTop="@dimen/note_line_height" />
+        
+    </RelativeLayout>
+    -->
+    
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+	    
+        <CheckBox
+            android:id="@+id/checkbox_task_completed"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_marginLeft="4dp"
+		    android:gravity="center_vertical" />
+        
+        <EditText
+	        android:id="@+id/edit_text_task_title"
+	        android:layout_width="match_parent"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginLeft="@dimen/note_left_margin"
+	        android:layout_alignBottom="@id/checkbox_task_completed"
+	        android:gravity="bottom"
+	        android:hint="@string/hint_task_title"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:inputType="textCapSentences"
+	        android:imeOptions="actionNext"
+	        android:background="@null" />
+	    
+		<ImageView
+	        android:id="@+id/image_view_task_due_date"
+	        android:layout_width="wrap_content"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_below="@id/checkbox_task_completed"
+	        android:layout_marginLeft="4dp"
+	        android:src="@drawable/ic_action_due" />
+    
+	    <TextView
+	        android:id="@+id/text_view_task_due_date"
+	        android:layout_width="match_parent"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginLeft="@dimen/note_left_margin"
+	        android:layout_alignBottom="@id/image_view_task_due_date"
+	        android:gravity="bottom"
+	        android:hint="@string/hint_task_due_date"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <ImageView
+	        android:id="@+id/image_view_task_reminder_datetime"
+	        android:layout_width="wrap_content"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_below="@id/image_view_task_due_date"
+	        android:layout_alignLeft="@id/image_view_task_due_date"
+	        android:src="@drawable/ic_action_reminder_datetime" />
+    
+	    <TextView
+	        android:id="@+id/text_view_task_reminder_datetime"
+	        android:layout_width="match_parent"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_below="@id/text_view_task_due_date"
+	        android:layout_alignLeft="@id/text_view_task_due_date"
+	        android:gravity="bottom"
+	        android:hint="@string/hint_task_reminder_datetime"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <ImageView
+	        android:id="@+id/image_view_task_reminder_location"
+	        android:layout_width="wrap_content"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_below="@id/image_view_task_reminder_datetime"
+	        android:layout_alignLeft="@id/image_view_task_reminder_datetime"
+	        android:src="@drawable/ic_action_reminder_location" />
+	        
+	    <TextView
+	        android:id="@+id/text_view_task_reminder_location"
+	        android:layout_width="match_parent"
+	        android:layout_height="@dimen/note_line_height"
+	        android:layout_below="@id/text_view_task_reminder_datetime"
+	        android:layout_alignLeft="@id/text_view_task_reminder_datetime"
+			android:gravity="bottom"
+	        android:hint="@string/hint_task_reminder_location"
+			android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <TextView
+	        android:id="@+id/text_view_task_notes_label"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/note_line_height"
+            android:layout_below="@id/text_view_task_reminder_location"
+            android:layout_alignLeft="@id/text_view_task_reminder_location"
+            android:layout_marginTop="@dimen/note_line_height"
+            android:gravity="bottom"
+            android:text="@string/task_notes_label"
+            android:textColor="@color/note_grey"
+            style="@android:style/TextAppearance.Medium" />
+	    
+	    <EditText
+	        android:id="@+id/edit_text_task_notes"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:layout_below="@id/text_view_task_notes_label"
+	        android:layout_alignLeft="@id/text_view_task_notes_label"
+	        android:layout_marginTop="10dp"
+	        android:gravity="top|left"
+	        android:hint="@string/hint_task_notes"
+	        android:inputType="textMultiLine"
+	        android:lineSpacingExtra="@dimen/note_line_spacing"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:background="@null" />
+	        
+    </RelativeLayout>
+
+</FrameLayout>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <!-- Widgets TAG ids -->
+    <item type="id" name="TAG_TASKS_LIST_ID" />
+    <item type="id" name="TAG_REMINDER_ID" />
+    <item type="id" name="TAG_DATETIME_YEAR" />
+    <item type="id" name="TAG_DATETIME_MONTH" />
+    <item type="id" name="TAG_DATETIME_DAY" />
+    <item type="id" name="TAG_DATETIME_HOUR" />
+    <item type="id" name="TAG_DATETIME_MINUTE" />
+    <item type="id" name="TAG_DATETIME" />
+    <item type="id" name="TAG_LOCATION_ADDRESS" />
+    <item type="id" name="TAG_IS_PROXIMITY_ENTERING" />
+    
+    <!-- DragSortListView ids -->
+    <item type="id" name="drag_handle" />
+    <item type="id" name="click_remove" />
+    
+</resources>
